@@ -1,0 +1,14 @@
+# Developed and tested on Python 3.12 (macOS, CPU).
+# The exact versions used for the reported results are frozen in requirements-lock.txt.
+numpy>=1.26,<3
+pandas>=2.0,<3
+scipy>=1.11
+scikit-learn>=1.3
+scikit-image>=0.22        # HOG features (Phase 4)
+opencv-python-headless>=4.8
+matplotlib>=3.7
+seaborn>=0.13
+statsmodels>=0.14         # McNemar test, multiple-comparison correction (Phase 6)
+torch>=2.2                # CNN only; CPU build is sufficient, CUDA is used if present
+tqdm>=4.66
+pytest>=7.4

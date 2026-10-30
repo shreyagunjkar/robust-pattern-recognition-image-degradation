@@ -1,0 +1,16 @@
+{
+  "python": "3.12.16",
+  "platform": "macOS-26.7.1-arm64-arm-64bit",
+  "device": "cpu",
+  "seed": "42",
+  "numpy": "2.5.4",
+  "pandas": "2.3.3",
+  "scipy": "1.18.1",
+  "sklearn": "1.9.1",
+  "skimage": "0.26.0",
+  "cv2": "5.0.0",
+  "matplotlib": "3.11.2",
+  "seaborn": "0.13.2",
+  "statsmodels": "0.15.0",
+  "torch": "2.15.0"
+}

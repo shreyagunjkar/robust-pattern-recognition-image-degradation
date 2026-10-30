@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+data/raw/*
+!data/raw/.gitkeep
+data/cache/
+*.part
+.DS_Store
+tests/
