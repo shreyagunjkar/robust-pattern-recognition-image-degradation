@@ -244,9 +244,14 @@ def _parse_cifair_batch(zf: zipfile.ZipFile, member: str, expected_md5: Optional
     if not (isinstance(data, np.ndarray) and data.dtype == np.uint8
             and data.ndim == 2 and data.shape[1] == 3072):
         raise ValueError(f"{member}: 'data' is not a (N, 3072) uint8 array")
-    if not isinstance(labels, (list, np.ndarray)) or len(labels) != len(data):
-        raise ValueError(f"{member}: 'labels' do not match 'data'")
-    labels = np.asarray(labels, dtype=np.int64)
+    if not isinstance(labels, (list, np.ndarray)):
+        raise ValueError(f"{member}: 'labels' must be a list or array")
+    labels = np.asarray(labels)  # ragged input raises ValueError here
+    if (labels.ndim != 1 or labels.size == 0 or len(labels) != len(data)
+            or not np.issubdtype(labels.dtype, np.integer)):
+        raise ValueError(f"{member}: 'labels' must be a one-dimensional integer vector "
+                         f"matching 'data'")
+    labels = labels.astype(np.int64)
     if labels.min() < 0 or labels.max() > 9:
         raise ValueError(f"{member}: labels outside [0, 9]")
     images = data.reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)
@@ -273,7 +278,7 @@ _OFFICIAL_SIZES = {"fashion_mnist": (60_000, 10_000), "cifar10": (50_000, 10_000
 # --------------------------------------------------------------------------- #
 # Splits and near-duplicate masks (fingerprinted caches)
 # --------------------------------------------------------------------------- #
-def _array_digest(*arrays: np.ndarray) -> str:
+def array_digest(*arrays: np.ndarray) -> str:
     """SHA-256 over dtype, shape and bytes, so the digest changes with content AND order."""
     digest = hashlib.sha256()
     for array in arrays:
@@ -450,7 +455,7 @@ def load_dataset(name: str, seed: int = config.SEED, debug: Optional[bool] = Non
         raise ValueError(f"{name}: unexpected official split sizes {len(y_full)}/{len(y_test)}")
     if x_full.shape[1:] != spec.image_shape or x_test.shape[1:] != spec.image_shape:
         raise ValueError(f"{name}: unexpected image shape {x_full.shape[1:]}")
-    data_digest = _array_digest(x_full, y_full, x_test, y_test)
+    data_digest = array_digest(x_full, y_full, x_test, y_test)
 
     train_idx, val_idx, val_removed = load_or_create_split(
         name, x_full, y_full, spec.n_val, seed,

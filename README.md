@@ -5,8 +5,8 @@ A controlled, reproducible comparison of three pattern-recognition approaches
 progressively degraded test images (Gaussian noise, Gaussian blur, brightness /
 contrast). Datasets: Fashion-MNIST (primary) and CIFAR-10 (replication).
 
-This is a comparative study, not a new algorithm. **Status: Phase 2 of 7 (project
-setup and data loading) is complete.** No degradations, models or results exist yet.
+This is a comparative study, not a new algorithm. **Status: Phase 3 of 7 (degradation
+pipeline) is complete.** The severity ladder is frozen. No models, experiments or results exist yet.
 
 ## Setup
 
@@ -19,6 +19,8 @@ pip install -r requirements.txt          # or: pip install -r requirements-lock.
 python -m src.data_loader --dataset fashion_mnist [--debug]   # first run downloads and checksum-verifies the data
 python -m src.data_loader --dataset cifair10                  # also: cifar10 (original, sensitivity analysis)
 python -m src.utils                      # writes results/metrics/environment.json
+python -m src.calibration                # audit the severity ladder (add --freeze to write the record)
+python -m src.visualization              # regenerate the degradation grids and calibration curves
 ```
 
 `PRJ_DEBUG=1` (or `debug=True`) switches every loader to small stratified subsets so the
@@ -39,9 +41,11 @@ whole pipeline can be tested in minutes before the full run.
 - Split indices and near-duplicate masks are cached in `data/splits/`. Each file is named
   after a SHA-256 fingerprint of the image/label arrays and of every parameter that produced
   it (seed, `n_val`, thresholds, algorithm version) and is validated on load (index types,
-  bounds, uniqueness, disjointness, coverage; mask dtype and length), so a stale or corrupted
-  cache cannot be reused silently. Saved indices fix the split itself across library versions;
-  they do not make feature computation or training version-independent.
+  bounds, uniqueness, disjointness, coverage; mask dtype and length). This catches caches built
+  for different data or parameters and structurally invalid files; it does not detect every
+  corruption (a modified but still valid-looking index set or mask passes, because file contents
+  are not hashed against the fingerprint). Saved indices fix the split itself across library
+  versions; they do not make feature computation or training version-independent.
 - Downloads are verified against pinned MD5 and SHA-256 checksums (`src/config.py`).
   The Fashion-MNIST and CIFAR-10 MD5s match the values published by their authors; the
   ciFAIR-10 archive MD5 and `test_batch` MD5 match the values in the authors' official loader.
@@ -98,17 +102,41 @@ Inspection figures: `results/plots/leakage_*_closest_pairs.png`.
 
 ## Preprocessing (shared by all models)
 
-`uint8 image -> degradation (Phase 3) -> uint8 -> /255 -> (x - mean) / std`. The scalars are
-fitted on the clean training images only and frozen, so degraded images are never
-re-normalised with their own statistics.
+`uint8 image -> degradation -> uint8 -> /255 -> (x - mean) / std`. The scalars are fitted on the
+clean training images only and frozen, so degraded images are never re-normalised with their own
+statistics. HOG features are computed from the degraded image at unit scale (`/255` only), not from
+normalised pixels.
+
+## Degradations (Phase 3)
+
+Gaussian noise, Gaussian blur, contrast scaled around the per-image mean, and additive brightness,
+five severities each plus clean (21 conditions). Full definitions, the audit and its findings are in
+[`docs/degradations.md`](docs/degradations.md); the essentials:
+
+- Float32 arithmetic on [0, 1]; clip to [0, 1], multiply by 255, round half to even, store as `uint8`.
+  Severity 0 returns an exact copy of the input.
+- Blur is separable over the spatial axes only (never across channels), radius `ceil(3σ)`, mirrored borders.
+  Contrast uses one scalar mean per image over all pixels and channels. Brightness is positive only.
+- Noise is keyed by `(seed, realisation, split, original image id)`, so it is independent of
+  batching and order, and every model receives identical degraded arrays through `get_degraded`.
+  Caches are named after a fingerprint of the source data, parameters, seed and implementation version.
+- Severities were audited with PSNR/SSIM on a fixed subset of clean **training** images against criteria
+  declared in advance, then **frozen** (`results/metrics/severity_ladder_frozen.json`) before any model
+  existed. `degrade()` refuses to run if the ladder or definitions change. PSNR/SSIM comparisons across
+  families do not indicate equal recognition difficulty (brightness is worst by PSNR but best by SSIM at severity 5).
+
+**Evaluation rule for later phases:** models are trained and tuned once on the primary data and then
+frozen. Every sensitivity analysis (original CIFAR-10 test set, ciFAIR-10 without the pixel filter,
+unfiltered Fashion-MNIST) must reuse those same models; nothing is retrained or retuned per test variant.
 
 ## Project layout
 
 ```
-src/            config, data_loader, preprocessing, leakage, utils   (degradations, models,
-                evaluation, experiments, visualization are added in later phases)
-data/raw|splits|cache   downloaded data (git-ignored), saved split indices, degraded-image cache
-results/        metrics/, plots/, confusion_matrices/
+src/            config, data_loader, preprocessing, leakage, utils, degradations, calibration,
+                visualization   (models, evaluation, experiments are added in later phases)
+docs/           degradations.md (definitions, audit, limitations)
+data/raw|splits|cache   downloaded data (git-ignored), saved split indices, degraded-image cache (git-ignored)
+results/        metrics/ (severity audit, frozen ladder), plots/ (grids, curves), confusion_matrices/
 notebooks/      exploration only; the pipeline lives in src/
 ```
 
@@ -116,10 +144,10 @@ notebooks/      exploration only; the pipeline lives in src/
 
 Seed 42 (`src/config.py`); PyTorch deterministic kernels are requested but results can still
 differ across hardware, drivers and library versions. Software versions:
-`results/metrics/environment.json` and `requirements-lock.txt`. Degradation parameters, model hyperparameters and the final
-experimental matrix will be added here as each phase is completed.
+`results/metrics/environment.json` and `requirements-lock.txt`. Degradation parameters are in `src/degradations.py` and the frozen ladder record; model
+hyperparameters and the final experimental matrix will be added as each phase is completed.
 
 ## Roadmap
 
 1. Experimental design (done)  2. Project setup and data loading (done)
-3. Degradation pipeline  4. Models  5. Robustness experiment  6. Analysis  7. Paper support
+3. Degradation pipeline (done)  4. Models  5. Robustness experiment  6. Analysis  7. Paper support

@@ -1,0 +1,79 @@
+{
+  "ladder_fingerprint": "2bbc668759df499d3c140bcfd1245337c139cf80cf120b9e5f09fc6b35bc2d37",
+  "degradation_version": 1,
+  "frozen_on": "2026-10-30",
+  "statement": "Frozen after a model-independent PSNR/SSIM audit on a clean-training subset. No model had been trained or evaluated at this point.",
+  "ladders": {
+    "gaussian_noise": [
+      0.05,
+      0.1,
+      0.2,
+      0.35,
+      0.5
+    ],
+    "gaussian_blur": [
+      0.5,
+      1.0,
+      1.5,
+      2.0,
+      3.0
+    ],
+    "contrast": [
+      0.75,
+      0.5,
+      0.3,
+      0.15,
+      0.05
+    ],
+    "brightness": [
+      0.1,
+      0.2,
+      0.3,
+      0.4,
+      0.5
+    ]
+  },
+  "severity_names": [
+    "clean",
+    "mild",
+    "moderate",
+    "high",
+    "very_high",
+    "extreme"
+  ],
+  "calibration": {
+    "datasets": [
+      "fashion_mnist",
+      "cifair10"
+    ],
+    "per_class": 100,
+    "seed": 42,
+    "source": "clean training images",
+    "ssim_settings": {
+      "data_range": 255,
+      "gaussian_weights": true,
+      "sigma": 1.5,
+      "win_size": 11,
+      "use_sample_covariance": false
+    },
+    "skimage_version": "0.26.0",
+    "audit_csv": "severity_calibration.csv"
+  },
+  "criteria": {
+    "C1": {
+      "description": "median PSNR and mean SSIM strictly decrease from severity 1 to 5 (every dataset, family)",
+      "passed": true,
+      "failures": []
+    },
+    "C2": {
+      "description": "at severity 1, >= 99% of calibration images differ from the clean image",
+      "passed": true,
+      "failures": []
+    },
+    "C3": {
+      "description": "at severity 5, <= 1% of calibration images are constant",
+      "passed": true,
+      "failures": []
+    }
+  }
+}
