@@ -28,46 +28,71 @@ whole pipeline can be tested in minutes before the full run.
 
 | Key | Source | Train | Val | Test | Role |
 |---|---|---|---|---|---|
-| `fashion_mnist` | Zalando Research, 28×28 gray | 50,000 | 10,000 | 9,982 | primary |
-| `cifair10` | ciFAIR-10 (CIFAR-10, duplicate test images replaced), 32×32 RGB | 45,000 | 5,000 | 9,901 | replication |
+| `fashion_mnist` | Zalando Research, 28×28 gray | 50,000 | 9,986 | 9,982 | primary |
+| `cifair10` | ciFAIR-10 (CIFAR-10, duplicate test images replaced), 32×32 RGB | 45,000 | 4,928 | 9,901 | replication |
 | `cifar10` | original CIFAR-10 | 45,000 | 5,000 | 10,000 | sensitivity analysis only |
 
 - Images are `uint8` arrays of shape `(N, H, W, C)` (`C = 1` for Fashion-MNIST), labels `int64`.
-- Validation is a stratified split of the official training set (seed 42); the indices are
-  saved in `data/splits/` and reused, so results never depend on library versions.
+- Validation is a stratified split of the official training set (seed 42), after which
+  validation images that are near-duplicates of a training image are removed (see below).
   The validation set is used only for hyperparameter selection, on clean images.
-- Downloads are verified against pinned MD5 and SHA-256 checksums
-  (`src/config.py`). Fashion-MNIST and CIFAR-10 MD5s match the values published by their
-  authors. ciFAIR-10 publishes no checksums, so both of its hashes were computed by us.
-- Nothing is unpickled with the standard unpickler. CIFAR-10 uses the binary release;
-  ciFAIR-10 only ships as pickles, so it is read with a restricted unpickler that allows
-  just the five numpy/codec globals the files reference (found by scanning the opcodes
-  without executing them) and rejects everything else.
+- Split indices and near-duplicate masks are cached in `data/splits/`. Each file is named
+  after a SHA-256 fingerprint of the image/label arrays and of every parameter that produced
+  it (seed, `n_val`, thresholds, algorithm version) and is validated on load (index types,
+  bounds, uniqueness, disjointness, coverage; mask dtype and length), so a stale or corrupted
+  cache cannot be reused silently. Saved indices fix the split itself across library versions;
+  they do not make feature computation or training version-independent.
+- Downloads are verified against pinned MD5 and SHA-256 checksums (`src/config.py`).
+  The Fashion-MNIST and CIFAR-10 MD5s match the values published by their authors; the
+  ciFAIR-10 archive MD5 and `test_batch` MD5 match the values in the authors' official loader.
+  All SHA-256 values were computed by us from the verified downloads.
+- ciFAIR-10 only ships as pickles, so loading it is handled as reading a trusted,
+  checksum-pinned artifact, not as a safe parser for untrusted pickles: checksum first, then
+  an opcode filter (rejects extension-registry, persistent-id and instance opcodes, which
+  would bypass the global allowlist), a restricted unpickler allowing only the five
+  numpy/codec globals the files reference, a size limit, and schema/dtype validation.
+  CIFAR-10 and Fashion-MNIST are read from raw bytes, nothing is unpickled.
 
 ### Leakage control (train images must never appear in the test set)
 
 No dataset contains byte-identical images across splits (hash check). Near-duplicates do
-exist, so the loader removes test images whose nearest train/val image is closer than an
-RMS pixel distance (on the [0, 1] scale), applied identically for every model:
+exist, so the loader removes images whose nearest training image is closer than an RMS
+pixel distance (on the [0, 1] scale). The same rule is applied to every model:
 
-| Dataset | Rule | Test images removed |
-|---|---|---|
-| Fashion-MNIST | RMS ≤ 0.04 (visual inspection: pairs up to ~0.04 are the same item, from ~0.045 they are different items of the same type) | 18 |
-| ciFAIR-10 | the authors' 308 replacements, plus RMS ≤ 0.08 | 99 further |
+| Dataset | Threshold (RMS) | Test images removed | Val images removed |
+|---|---|---|---|
+| Fashion-MNIST | 0.04 | 18 | 14 |
+| ciFAIR-10 | 0.08 (on top of the authors' 308 replacements) | 99 | 72 |
+| CIFAR-10 (original) | none | 0 | 0 |
+
+Test sets are therefore **distance-filtered benchmarks**. A pixel threshold flags candidates;
+it does not establish that a removed image is the same source image, nor that every
+surviving image is source-independent.
+
+**Test-set curation policy (disclosure).** The thresholds were chosen on 2026-10-30 by looking at
+ranked test/train image pairs (images only; no model existed and no labels or predictions were
+used) and are frozen in `src/config.py` before any model is trained. Fashion-MNIST: pairs up to
+~0.04 looked like the same garment, from ~0.045 like different items of the same type. CIFAR-10:
+pairs that look identical at 32×32 keep appearing up to ~0.08, interleaved with look-alikes.
+Because the test set was inspected to build the benchmark, it is not strictly untouched.
 
 Caveats to report in the paper:
-- The thresholds are judgement calls. On CIFAR a pixel threshold cannot separate duplicates
-  from look-alikes, and 246 of the 308 ciFAIR replacements lie above RMS 0.08, so a
-  pixel-distance filter alone would miss most true duplicates. This is a mitigation, not a
-  guarantee: shifted or rescaled duplicates can remain.
+- On CIFAR a pixel threshold cannot separate duplicates from look-alikes, and 246 of the 308
+  ciFAIR replacements lie above RMS 0.08, so a pixel filter alone would miss most true
+  duplicates. Shifted or rescaled duplicates can remain.
 - Many pairs that look identical at 32×32 survive ciFAIR's replacement. We did not check
-  whether ciFAIR classifies them as "very similar" rather than duplicates.
-- The filtered test sets are not exactly class-balanced (Fashion-MNIST 994–1000 per class,
-  ciFAIR-10 971–1000), so macro recall is no longer exactly equal to accuracy.
-- Sensitivity analysis (Phase 5/6): repeat the evaluation on the original CIFAR-10 test set
-  and on ciFAIR without the pixel filter (`dedup_test=False`). Conclusions should hold on all variants.
-- The project page states 3.25% of CIFAR-10 test images are duplicates; we measured 308
-  changed images (3.08%). We did not investigate the difference.
+  whether ciFAIR classifies them as "very similar" rather than same-source duplicates.
+- Filtering conditions on similarity to the training set, which changes the evaluated
+  population; whether that makes the benchmark easier or harder has not been measured.
+- The filtered sets are not exactly class-balanced (Fashion-MNIST test 994–1000 per class,
+  ciFAIR-10 test 971–1000), so macro recall no longer equals accuracy exactly.
+- The ciFAIR page states 3.25% of CIFAR-10 test images are duplicates; we measured 308
+  changed images (3.08%). We did not reconcile the difference.
+- Near-duplicates inside the training set are left in place (they do not leak into held-out data).
+
+Planned sensitivity analyses (Phase 5/6), all supported by flags: Fashion-MNIST unfiltered
+(`dedup_test=False`), original CIFAR-10, ciFAIR-10 unfiltered, and accuracy / performance drop
+stratified by nearest-training-image distance. Conclusions should hold across variants.
 
 Inspection figures: `results/plots/leakage_*_closest_pairs.png`.
 
@@ -89,8 +114,9 @@ notebooks/      exploration only; the pipeline lives in src/
 
 ## Reproducibility record
 
-Seed 42 (`src/config.py`). Software versions: `results/metrics/environment.json` and
-`requirements-lock.txt`. Degradation parameters, model hyperparameters and the final
+Seed 42 (`src/config.py`); PyTorch deterministic kernels are requested but results can still
+differ across hardware, drivers and library versions. Software versions:
+`results/metrics/environment.json` and `requirements-lock.txt`. Degradation parameters, model hyperparameters and the final
 experimental matrix will be added here as each phase is completed.
 
 ## Roadmap

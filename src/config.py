@@ -32,6 +32,9 @@ DEBUG_PER_CLASS = {"train": 200, "val": 50, "test": 100}
 # from the evaluation set. See src/leakage.py; thresholds were chosen by visual
 # inspection of ranked nearest-neighbour pairs.
 DEDUP_TEST = True
+# The same rule applied between the validation and the training images, so that
+# clean-validation hyperparameter selection cannot reward memorised near-copies.
+DEDUP_VAL = True
 
 
 @dataclass(frozen=True)
@@ -114,7 +117,8 @@ CIFAR10 = DatasetSpec(
 # ciFAIR-10 (Barz & Denzler): identical training set, 308 test-set duplicates replaced by
 # new images (verified against CIFAR-10). Pairs that look identical at 32x32 still remain
 # up to an RMS distance of ~0.08, so those test images are removed as well. The authors
-# publish no checksums, so both hashes below were computed by us from the v1.0 release.
+# publish an archive MD5 and a test_batch MD5 in their official loader
+# (github.com/cvjena/cifair, loaders/pytorch/cifair.py); the SHA-256 below was computed by us.
 CIFAIR10 = DatasetSpec(
     name="cifair10",
     image_shape=(32, 32, 3),
@@ -130,5 +134,8 @@ CIFAIR10 = DatasetSpec(
         ),
     ),
 )
+
+# MD5 of the ciFAIR-10 test_batch member, as published by the authors (same loader).
+CIFAIR10_TEST_BATCH_MD5 = "01290e6b622a1977a000eff13650aca2"
 
 DATASETS = {spec.name: spec for spec in (FASHION_MNIST, CIFAR10, CIFAIR10)}

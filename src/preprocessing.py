@@ -5,6 +5,10 @@ Order of operations at evaluation time:
 The normalisation constants are scalars fitted on the CLEAN training images only
 and then frozen, so degraded images are never re-normalised with their own
 statistics (which would silently hide brightness/contrast changes).
+
+HOG features (Phase 4) must be computed from `to_unit_float` output, NOT from `normalize`
+output: normalised pixels are negative, which breaks HOG's optional square-root
+compression (it produced non-finite features in a check).
 """
 from __future__ import annotations
 

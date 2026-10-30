@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import importlib
+import os
 import platform
 import random
 import sys
@@ -13,7 +14,8 @@ from . import config
 
 
 def set_seed(seed: int = config.SEED) -> None:
-    """Seed every RNG the project uses (Python, NumPy and, if installed, PyTorch)."""
+    """Seed every RNG the project uses (Python, NumPy and, if installed, PyTorch) and request
+    deterministic PyTorch kernels."""
     random.seed(seed)
     np.random.seed(seed)
     try:
@@ -23,6 +25,12 @@ def set_seed(seed: int = config.SEED) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():
         torch.cuda.manual_seed_all(seed)
+    # Best effort, not a guarantee: results can still differ across hardware, drivers and
+    # library versions. warn_only keeps ops without a deterministic kernel from crashing.
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True, warn_only=True)
 
 
 def get_device() -> str:
