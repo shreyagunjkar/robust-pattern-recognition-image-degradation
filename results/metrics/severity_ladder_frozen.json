@@ -1,5 +1,6 @@
 {
-  "ladder_fingerprint": "2bbc668759df499d3c140bcfd1245337c139cf80cf120b9e5f09fc6b35bc2d37",
+  "ladder_fingerprint": "eaa5183ea6e29fa6e4404e73c3c6806d6416c5bbe86d199c37455ff8d8da1ad6",
+  "supersedes_fingerprint": "2bbc668759df499d3c140bcfd1245337c139cf80cf120b9e5f09fc6b35bc2d37",
   "degradation_version": 1,
   "frozen_on": "2026-10-30",
   "statement": "Frozen after a model-independent PSNR/SSIM audit on a clean-training subset. No model had been trained or evaluated at this point.",
@@ -41,12 +42,78 @@
     "very_high",
     "extreme"
   ],
+  "specification": {
+    "version": 1,
+    "names": [
+      "clean",
+      "mild",
+      "moderate",
+      "high",
+      "very_high",
+      "extreme"
+    ],
+    "ladders": {
+      "gaussian_noise": [
+        0.05,
+        0.1,
+        0.2,
+        0.35,
+        0.5
+      ],
+      "gaussian_blur": [
+        0.5,
+        1.0,
+        1.5,
+        2.0,
+        3.0
+      ],
+      "contrast": [
+        0.75,
+        0.5,
+        0.3,
+        0.15,
+        0.05
+      ],
+      "brightness": [
+        0.1,
+        0.2,
+        0.3,
+        0.4,
+        0.5
+      ]
+    },
+    "arithmetic": {
+      "float": "float32 on [0, 1]",
+      "clip_then_round": "clip to [0, 1], x255, numpy.rint (ties to even), uint8",
+      "noise": "sigma * N(0,1) float32 per pixel and channel; seed=[seed, realisation, stream, image_id]",
+      "blur": "separable, axes (H, W) per channel, radius ceil(3*sigma), normalised, mirror borders",
+      "contrast": "m + alpha*(x - m), m = scalar mean over (H, W, C) of the clean image",
+      "brightness": "x + beta, clipped"
+    },
+    "stream_ids": {
+      "test": 0,
+      "train": 1,
+      "val": 2
+    },
+    "rng": {
+      "bit_generator": "numpy.random.default_rng (PCG64, seeded through numpy SeedSequence)",
+      "entropy": [
+        "seed",
+        "realisation",
+        "stream_id (STREAM_IDS)",
+        "original image id"
+      ],
+      "draw": "Generator.standard_normal(shape=(H, W, C), dtype=float32), C order, one generator per image",
+      "use": "x + sigma * z; one fixed field per (seed, realisation, stream, image) shared by all severities"
+    }
+  },
   "calibration": {
     "datasets": [
       "fashion_mnist",
       "cifair10"
     ],
     "per_class": 100,
+    "n_images_per_row": 1000,
     "seed": 42,
     "source": "clean training images",
     "ssim_settings": {
@@ -57,7 +124,8 @@
       "use_sample_covariance": false
     },
     "skimage_version": "0.26.0",
-    "audit_csv": "severity_calibration.csv"
+    "audit_csv": "severity_calibration.csv",
+    "audit_csv_sha256": "a26600a82c3a502f4e7d5de8752ff8e68e546252c15637957b35ae2fb7da92d4"
   },
   "criteria": {
     "C1": {

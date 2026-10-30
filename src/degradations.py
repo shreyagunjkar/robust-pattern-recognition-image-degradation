@@ -1,7 +1,6 @@
 """Controlled image degradations: Gaussian noise, Gaussian blur, contrast, brightness.
 
-Definitions (also documented in docs/degradations.md; bump DEGRADATION_VERSION and re-freeze the
-ladder if any of them change):
+Definitions (also documented in docs/degradations.md):
 
 Arithmetic   Images are uint8 (N, H, W, C). They are converted to float32 on [0, 1] (v / 255),
              degraded in float32, CLIPPED to [0, 1], multiplied by 255 and ROUNDED to the nearest
@@ -19,6 +18,17 @@ Contrast     x' = m + alpha * (x - m), m = ONE scalar per image: the mean of the
              channels are therefore scaled by alpha as well (alpha -> 0 gives a uniform grey).
              For 0 <= alpha <= 1 the result stays inside [0, 1], so clipping never acts.
 Brightness   x' = x + beta (beta > 0 only: brightening, with saturation at 1 by clipping).
+
+What the freeze guard does and does not detect
+  The frozen manifest (results/metrics/severity_ladder_frozen.json) stores a fingerprint of the
+  DECLARED specification: DEGRADATION_VERSION, severity names, the four ladders, the arithmetic
+  description, STREAM_IDS and RNG_SPEC. degrade() and get_degraded() refuse to run if the manifest
+  is missing or its fingerprint differs from the current specification.
+  The fingerprint does NOT cover the code. Editing an implementation so that pixels change, without
+  touching one of the declared items above, goes undetected: whoever changes the semantics must bump
+  DEGRADATION_VERSION by hand, re-run the audit and re-freeze. No automatic implementation check
+  exists in the repository (the local, git-ignored test suite has pixel-level regression tests that
+  catch some such edits, but a clone does not carry them).
 """
 from __future__ import annotations
 
@@ -52,6 +62,15 @@ LADDERS: Dict[str, Tuple[float, ...]] = {
 # Separate random streams so that train / val / test images with equal ids get unrelated noise.
 STREAM_IDS = {"test": 0, "train": 1, "val": 2}
 
+# The concrete noise generator. Part of the frozen identity and of every cache identity, because a
+# different bit generator, entropy layout or draw method gives different pixels.
+RNG_SPEC = {
+    "bit_generator": "numpy.random.default_rng (PCG64, seeded through numpy SeedSequence)",
+    "entropy": ["seed", "realisation", "stream_id (STREAM_IDS)", "original image id"],
+    "draw": "Generator.standard_normal(shape=(H, W, C), dtype=float32), C order, one generator per image",
+    "use": "x + sigma * z; one fixed field per (seed, realisation, stream, image) shared by all severities",
+}
+
 FROZEN_LADDER_PATH = config.METRICS_DIR / "severity_ladder_frozen.json"
 
 _ARITHMETIC_SPEC = {
@@ -64,8 +83,16 @@ _ARITHMETIC_SPEC = {
 }
 
 
-class LadderChangedError(RuntimeError):
-    pass
+class FreezeGuardError(RuntimeError):
+    """Base class: the degradations may not be used because the frozen record does not vouch for them."""
+
+
+class LadderNotFrozenError(FreezeGuardError):
+    """The frozen manifest is missing or unreadable."""
+
+
+class LadderChangedError(FreezeGuardError):
+    """The current specification differs from the frozen manifest."""
 
 
 # --------------------------------------------------------------------------- #
@@ -93,24 +120,53 @@ def condition_name(family: str, severity: int) -> str:
     return "clean" if severity == 0 else f"{family}_s{severity}"
 
 
-def ladder_fingerprint() -> str:
-    spec = {"version": DEGRADATION_VERSION, "names": SEVERITY_NAMES,
-            "ladders": {f: list(v) for f, v in LADDERS.items()}, "arithmetic": _ARITHMETIC_SPEC}
+def ladder_spec() -> Dict[str, object]:
+    """The declared specification that the frozen fingerprint covers (JSON-serialisable)."""
+    return {"version": DEGRADATION_VERSION, "names": list(SEVERITY_NAMES),
+            "ladders": {f: list(v) for f, v in LADDERS.items()}, "arithmetic": _ARITHMETIC_SPEC,
+            "stream_ids": STREAM_IDS, "rng": RNG_SPEC}
+
+
+def _spec_fingerprint(spec: Dict[str, object]) -> str:
     return hashlib.sha256(json.dumps(spec, sort_keys=True).encode()).hexdigest()
 
 
-def verify_frozen_ladder(path: Optional[Path] = None) -> None:
-    """Raise if the ladders or definitions differ from the frozen record (when one exists)."""
+def ladder_fingerprint() -> str:
+    return _spec_fingerprint(ladder_spec())
+
+
+def verify_frozen_ladder(path: Optional[Path] = None, *, allow_missing: bool = False) -> None:
+    """Raise unless the frozen manifest exists and matches the current specification.
+
+    `allow_missing=True` is the explicit unfrozen path used while the ladder is being audited: a
+    missing manifest is then accepted, but an existing one must still match.
+    """
     path = FROZEN_LADDER_PATH if path is None else path
     if not path.exists():
-        return
-    frozen = json.loads(path.read_text())["ladder_fingerprint"]
+        if allow_missing:
+            return
+        raise LadderNotFrozenError(
+            f"{path.name} not found: the severity ladder has not been frozen. Run the audit and "
+            f"`python -m src.calibration --freeze` first (calibration code may call the unguarded "
+            f"degrade_float, or degrade(..., allow_unfrozen=True)).")
+    try:
+        manifest = json.loads(path.read_text())
+        frozen = manifest["ladder_fingerprint"]
+    except (ValueError, KeyError, TypeError) as exc:
+        raise LadderNotFrozenError(f"{path.name} is unreadable or has no ladder_fingerprint: {exc!r}")
+    recorded = manifest.get("specification")
+    if recorded is not None and _spec_fingerprint(recorded) != frozen:
+        raise LadderChangedError(f"{path.name} is internally inconsistent: its specification does "
+                                 f"not hash to its ladder_fingerprint (edited by hand?)")
     if frozen != ladder_fingerprint():
+        current = json.loads(json.dumps(ladder_spec()))
+        differing = sorted(k for k in set(current) | set(recorded)
+                           if recorded.get(k) != current.get(k)) if recorded else []
         raise LadderChangedError(
-            f"severity ladder / degradation definitions differ from {path.name}. Results from "
-            f"different ladders are not comparable; revert the change or re-run the audit and "
-            f"re-freeze before evaluating any model."
-        )
+            f"severity ladder / degradation definitions differ from {path.name}"
+            f"{' in: ' + ', '.join(differing) if differing else ''}. Results from different "
+            f"definitions are not comparable; revert the change or re-run the audit and re-freeze "
+            f"before evaluating any model.")
 
 
 # --------------------------------------------------------------------------- #
@@ -181,10 +237,24 @@ def _check(x: np.ndarray, image_ids: Sequence[int]) -> np.ndarray:
     return ids.astype(np.int64)
 
 
+def _check_chunk(chunk: object) -> int:
+    """A chunk size must be a positive integer (not a bool); checked before any allocation."""
+    if isinstance(chunk, (bool, np.bool_)) or not isinstance(chunk, (int, np.integer)):
+        raise TypeError(f"chunk must be a positive integer, got {chunk!r} ({type(chunk).__name__})")
+    if chunk <= 0:
+        raise ValueError(f"chunk must be a positive integer, got {chunk}")
+    return int(chunk)
+
+
 def degrade_float(x: np.ndarray, family: str, severity: int, image_ids: Sequence[int], *,
                   seed: int = config.SEED, realisation: int = 0, stream: str = "test",
                   chunk: int = 1000) -> np.ndarray:
-    """Un-clipped float32 degraded images on the [0, 1] scale (used for clipping statistics)."""
+    """Un-clipped float32 degraded images on the [0, 1] scale (used for clipping statistics).
+
+    This is the calibration path: it does NOT consult the freeze guard, so the ladder can be
+    audited before it is frozen. Model evaluation must use `get_degraded` / `degrade` instead.
+    """
+    chunk = _check_chunk(chunk)
     ids = _check(x, image_ids)
     value = severity_value(family, severity)
     if value is None:
@@ -199,15 +269,19 @@ def degrade_float(x: np.ndarray, family: str, severity: int, image_ids: Sequence
 
 def degrade(x: np.ndarray, family: str, severity: int, image_ids: Sequence[int], *,
             seed: int = config.SEED, realisation: int = 0, stream: str = "test",
-            chunk: int = 1000) -> np.ndarray:
+            chunk: int = 1000, allow_unfrozen: bool = False) -> np.ndarray:
     """Degrade uint8 images (N, H, W, C); returns uint8 of the same shape.
 
     `image_ids` are the ORIGINAL ids of the images (their positions in the official train or
     test set), so a given image receives the same noise whatever the batch, order or subset.
     Severity 0 returns an exact copy of `x`.
+
+    Refuses to run unless the frozen manifest exists and matches the current specification.
+    `allow_unfrozen=True` (illustrations, calibration) tolerates a MISSING manifest only.
     """
+    _check_chunk(chunk)
     _check(x, image_ids)
-    verify_frozen_ladder()
+    verify_frozen_ladder(allow_missing=allow_unfrozen)
     if severity_value(family, severity) is None:
         return x.copy()
     return to_uint8(degrade_float(x, family, severity, image_ids, seed=seed,
@@ -222,9 +296,13 @@ def degradation_fingerprint(*, source_digest: str, ids_digest: str, family: str,
     params: Dict[str, object] = {
         "version": DEGRADATION_VERSION, "family": family, "severity": severity,
         "value": repr(severity_value(family, severity)), "source": source_digest, "ids": ids_digest,
+        "specification": ladder_fingerprint(),  # ladders, arithmetic, STREAM_IDS and RNG_SPEC
     }
     if family == "gaussian_noise":  # the other families are deterministic: seed is irrelevant
-        params.update(seed=seed, realisation=realisation, stream=stream)
+        # numpy does not promise identical Generator streams across versions, so the numpy
+        # version is part of the noise identity (an upgrade regenerates instead of reusing).
+        params.update(seed=seed, realisation=realisation, stream=stream,
+                      stream_id=STREAM_IDS[stream], numpy=np.__version__)
     return hashlib.sha256(json.dumps(params, sort_keys=True).encode()).hexdigest()
 
 
@@ -235,7 +313,9 @@ def get_degraded(x: np.ndarray, image_ids: Sequence[int], family: str, severity:
     """Cached `degrade`. Every model must obtain its degraded images through this function.
 
     The cache file name embeds a fingerprint of the clean source array, the image ids, the
-    degradation parameters (and seed/realisation for noise) and the implementation version.
+    degradation parameters, the declared specification (ladders, arithmetic, STREAM_IDS, RNG_SPEC,
+    DEGRADATION_VERSION) and, for noise, seed / realisation / stream id / numpy version. It does
+    not cover the implementation code (see the module docstring). Requires the frozen manifest.
     """
     ids = _check(x, image_ids)
     verify_frozen_ladder()

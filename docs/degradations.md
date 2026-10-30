@@ -1,8 +1,8 @@
 # Degradation pipeline (Phase 3)
 
 Status: **implemented and frozen** (`DEGRADATION_VERSION = 1`, frozen 2026-10-30 in
-`results/metrics/severity_ladder_frozen.json`). The freeze happened before any model was trained
-or evaluated. Code: `src/degradations.py` (transformations, cache, freeze guard),
+`results/metrics/severity_ladder_frozen.json`, re-written the same day with a wider fingerprint; see
+"Freeze record history"). The freeze happened before any model was trained or evaluated. Code: `src/degradations.py` (transformations, cache, freeze guard),
 `src/calibration.py` (audit), `src/visualization.py` (figures).
 
 ## Definitions
@@ -31,14 +31,30 @@ All arithmetic is done in **float32 on the [0, 1] scale** (uint8 value / 255).
   selects an independent field; Phase 5 uses it for repeated noise realisations.
 - **Every model must obtain degraded images through `get_degraded` / `iter_degraded`.** The cache file
   name embeds a SHA-256 fingerprint of the clean source array, the image ids, the severity parameter,
-  and (for noise only) seed, realisation and stream, plus `DEGRADATION_VERSION`. A different source,
-  parameter, seed or version gives a different file, so a stale cache is not reused; the loaded array's
-  dtype and shape are validated. As in the data caches, file contents are not hashed, so a modified
-  but well-formed cache file would not be detected. Phase 5 should record `array_digest` of every
-  degraded array next to its results.
-- **Freeze guard.** `degrade()` and `get_degraded()` raise `LadderChangedError` if the ladders or
-  definitions no longer match the frozen record. Changing anything requires bumping
-  `DEGRADATION_VERSION`, re-running the audit and re-freezing, which invalidates comparisons with earlier results.
+  the declared specification (ladders, severity names, arithmetic description, `STREAM_IDS`, `RNG_SPEC`,
+  `DEGRADATION_VERSION`) and, for noise only, seed, realisation, stream, stream id and the numpy version
+  (numpy does not promise identical `Generator` streams across versions, so an upgrade regenerates
+  instead of reusing). A different source, parameter, seed, stream mapping, generator or version gives a
+  different file, so a stale cache is not reused; the loaded array's dtype and shape are validated. As in
+  the data caches, file contents are not hashed, so a modified but well-formed cache file would not be
+  detected. Phase 5 should record `array_digest` of every degraded array next to its results.
+- **Noise generator (`RNG_SPEC`).** `numpy.random.default_rng` (PCG64) seeded by the list
+  `[seed, realisation, STREAM_IDS[stream], image id]`, one generator per image, drawing
+  `standard_normal((H, W, C), dtype=float32)` in C order. `STREAM_IDS = {test: 0, train: 1, val: 2}`.
+- **Freeze guard.** `degrade()` and `get_degraded()` (and `iter_degraded()`) raise
+  `LadderNotFrozenError` if `severity_ladder_frozen.json` is **missing or unreadable**, and
+  `LadderChangedError` if the current specification no longer matches it (the message names the
+  differing parts, e.g. `stream_ids`, and a hand-edited manifest whose recorded specification does not
+  hash to its fingerprint is rejected). The explicit unfrozen path used for calibration is
+  `degrade_float` (never guarded) or `degrade(..., allow_unfrozen=True)`, which tolerates a *missing*
+  manifest only; a stale one is still refused. The freeze fingerprint covers the **declared
+  specification, not the code**: editing an implementation so that pixels change, without changing one
+  of the declared items, is not detected. Anyone changing the semantics must bump `DEGRADATION_VERSION`
+  by hand, re-run the audit and re-freeze, which invalidates comparisons with earlier results. No
+  automatic implementation check exists in the repository (the local, git-ignored tests contain
+  pixel-level regression tests that catch some such edits, but a clone does not carry them).
+- **`chunk`** (batch size of the internal loop; it never affects the output) must be a positive
+  integer: booleans, floats, strings, zero and negatives are rejected before any output is allocated.
 
 ## Pipeline order
 
@@ -66,6 +82,15 @@ clipping.
 **Criteria, declared before the audit was run:** (C1) median PSNR and mean SSIM strictly decrease from
 severity 1 to 5 for every dataset and family; (C2) at severity 1, at least 99% of images differ from
 clean; (C3) at severity 5, at most 1% of images are constant. **Result: all three pass on both datasets.**
+
+**Enforcement.** `freeze_ladder(audit)` takes only the audit table. It first validates it: exactly the 2
+datasets × 4 families × 5 severities (no missing, duplicate or unexpected rows), 1,000 images per row,
+finite metrics inside their valid ranges (SSIM in [-1, 1], fractions in [0, 1], PSNR p10 ≤ median ≤ p90,
+`frac_changed` consistent with `n_unchanged`, a finite cut-off for blur rows only), and parameters and
+severity names equal to the *current* ladder, so an audit of a different ladder cannot freeze this one.
+It then recomputes C1–C3 itself and refuses (`FreezeRefused`, nothing written) if any fails or if fewer than
+the three required criteria were evaluated. No caller-supplied verdict is accepted. The manifest records
+the SHA-256 of the audit CSV it was frozen from.
 
 | Family | Sev | Parameter | PSNR dB (F-MNIST / CIFAR) | SSIM (F-MNIST / CIFAR) | Clipped values (F / C) | Mean shift, grey levels (F / C) |
 |---|---|---|---|---|---|---|
@@ -129,6 +154,18 @@ Full table: `results/metrics/severity_calibration.csv`. Figures: `results/plots/
   image present in several variants receives identical degraded pixels in all of them.
 - The test set is evaluated through the frozen ladder only; no severity value may be changed after
   looking at model results.
+
+## Freeze record history
+
+- **2026-10-30, first freeze:** fingerprint `2bbc668759df…`. It covered `DEGRADATION_VERSION`, severity
+  names, the ladders and the arithmetic description.
+- **2026-10-30, re-freeze after review:** fingerprint `eaa5183ea6e2…` (`supersedes_fingerprint` in the
+  manifest). The fingerprint now also covers `STREAM_IDS` and `RNG_SPEC`, and the manifest stores the full
+  specification and the audit CSV's SHA-256. **Ladder values, severity names, transformation semantics and
+  `DEGRADATION_VERSION` are unchanged**; the audit was re-run and produced a byte-identical CSV, and all 84
+  checked degraded arrays (21 conditions × test set and clean-training calibration subset × 2 datasets)
+  had identical pixel digests before and after. The old fingerprint could not be kept because it did not
+  hash the new fields; no model had been trained or evaluated at either freeze.
 
 ## Limitations
 

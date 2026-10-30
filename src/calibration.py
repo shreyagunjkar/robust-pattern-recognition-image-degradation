@@ -19,6 +19,10 @@ Freeze criteria (declared BEFORE the audit was run; failing any of them blocks t
 Action rule: if all criteria hold for every dataset, the provisional ladder is frozen unchanged. If
 one fails, only the failing family may be adjusted, the audit is re-run once, and both versions are
 recorded.
+Enforcement  freeze_ladder() takes ONLY the audit table. It validates the table (exactly the 2
+             datasets x 4 families x 5 severities, no missing / duplicate / unexpected rows, expected
+             sample counts, finite and in-range metrics, parameters equal to the current ladder) and
+             recomputes C1-C3 itself; no caller-supplied verdict is accepted.
 Matching PSNR/SSIM across families does NOT mean matching recognition difficulty; the metrics only
 check that each ladder is monotone and non-degenerate.
 """
@@ -26,6 +30,7 @@ from __future__ import annotations
 
 import argparse
 import datetime
+import hashlib
 import json
 from typing import Dict, List, Tuple
 
@@ -44,8 +49,12 @@ CRITERIA = {
     "C2": "at severity 1, >= 99% of calibration images differ from the clean image",
     "C3": "at severity 5, <= 1% of calibration images are constant",
 }
+REQUIRED_CRITERIA = ("C1", "C2", "C3")
 CALIBRATION_DATASETS = ("fashion_mnist", "cifair10")
+N_CLASSES = 10  # both calibration datasets have ten classes
+CALIBRATION_N_IMAGES = CALIBRATION_PER_CLASS * N_CLASSES
 AUDIT_CSV = config.METRICS_DIR / "severity_calibration.csv"
+AUDIT_CSV_FLOAT_FORMAT = "%.5g"
 
 
 def calibration_subset(ds: ImageDataset) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -123,10 +132,115 @@ def run_audit(datasets=CALIBRATION_DATASETS) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+class AuditError(ValueError):
+    """The audit table is not the complete, well-formed audit of the current ladder."""
+
+
+class FreezeRefused(RuntimeError):
+    """A freeze criterion failed, so the ladder may not be frozen."""
+
+
+_KEY_COLUMNS = ("dataset", "family", "severity")
+_METRIC_COLUMNS = ("param", "n_images", "psnr_median", "psnr_p10", "psnr_p90", "n_unchanged",
+                   "ssim_mean", "ssim_median", "ssim_p10", "ssim_p90", "clip_fraction",
+                   "mean_shift_levels", "mean_range_levels", "frac_changed", "frac_constant",
+                   "cutoff_3db_cycles_per_px")
+AUDIT_COLUMNS = _KEY_COLUMNS + ("severity_name",) + _METRIC_COLUMNS
+
+
+def expected_audit_keys(datasets=CALIBRATION_DATASETS) -> List[Tuple[str, str, int]]:
+    return [(d, f, s) for d in datasets for f in degradations.FAMILIES for s in range(1, 6)]
+
+
+def validate_audit(audit: pd.DataFrame, datasets=CALIBRATION_DATASETS) -> pd.DataFrame:
+    """Return the audit sorted canonically, or raise AuditError listing every problem found.
+
+    Requires exactly one row per (dataset, family, severity) of the expected grid (2 x 4 x 5), the
+    expected number of calibration images per row, finite in-range metrics, and parameters and
+    severity names equal to the CURRENT ladder (so an audit of a different ladder cannot freeze it).
+    """
+    if not isinstance(audit, pd.DataFrame):
+        raise AuditError(f"audit must be a DataFrame, got {type(audit).__name__}")
+    missing_cols = [c for c in AUDIT_COLUMNS if c not in audit.columns]
+    if missing_cols:
+        raise AuditError(f"audit is missing columns: {missing_cols}")
+    problems: List[str] = []
+
+    keys = list(zip(audit["dataset"], audit["family"], audit["severity"]))
+    expected = expected_audit_keys(datasets)
+    seen: Dict[tuple, int] = {}
+    for key in keys:
+        seen[key] = seen.get(key, 0) + 1
+    duplicated = [k for k, n in seen.items() if n > 1]
+    unexpected = [k for k in seen if k not in set(expected)]
+    absent = [k for k in expected if k not in seen]
+    if duplicated:
+        problems.append(f"duplicate rows: {duplicated}")
+    if unexpected:
+        problems.append(f"unexpected rows: {unexpected}")
+    if absent:
+        problems.append(f"missing rows: {absent}")
+    if len(audit) != len(expected):
+        problems.append(f"expected {len(expected)} rows, found {len(audit)}")
+    if problems:  # the per-row checks below assume the grid is right
+        raise AuditError("; ".join(problems))
+
+    for column in _METRIC_COLUMNS:
+        if not pd.api.types.is_numeric_dtype(audit[column]) or pd.api.types.is_bool_dtype(audit[column]):
+            problems.append(f"column {column!r} is not numeric (dtype {audit[column].dtype})")
+    if not pd.api.types.is_integer_dtype(audit["severity"]):
+        problems.append("column 'severity' is not an integer column")
+    if problems:
+        raise AuditError("; ".join(problems))
+
+    def bad(row, why: str) -> None:
+        problems.append(f"{row.dataset}/{row.family}/s{row.severity}: {why}")
+
+    for row in audit.itertuples(index=False):
+        if row.severity_name != degradations.SEVERITY_NAMES[row.severity]:
+            bad(row, f"severity_name {row.severity_name!r} != {degradations.SEVERITY_NAMES[row.severity]!r}")
+        if not np.isclose(row.param, degradations.severity_value(row.family, row.severity), rtol=1e-6, atol=0):
+            bad(row, f"param {row.param!r} differs from the current ladder "
+                     f"{degradations.severity_value(row.family, row.severity)!r}")
+        if row.n_images != CALIBRATION_N_IMAGES:
+            bad(row, f"n_images {row.n_images!r} != {CALIBRATION_N_IMAGES}")
+        finite = {c: getattr(row, c) for c in _METRIC_COLUMNS if c != "cutoff_3db_cycles_per_px"}
+        for column, value in finite.items():
+            if not np.isfinite(value):
+                bad(row, f"{column} is not finite ({value!r})")
+        if row.family == "gaussian_blur":
+            if not (np.isfinite(row.cutoff_3db_cycles_per_px) and 0 < row.cutoff_3db_cycles_per_px <= 0.5):
+                bad(row, f"cutoff_3db_cycles_per_px {row.cutoff_3db_cycles_per_px!r} not in (0, 0.5]")
+        elif not np.isnan(row.cutoff_3db_cycles_per_px):
+            bad(row, "cutoff_3db_cycles_per_px must be empty for non-blur families")
+        if all(np.isfinite(v) for v in finite.values()):
+            for column in ("clip_fraction", "frac_changed", "frac_constant"):
+                if not 0.0 <= getattr(row, column) <= 1.0:
+                    bad(row, f"{column} {getattr(row, column)!r} outside [0, 1]")
+            for column in ("ssim_mean", "ssim_median", "ssim_p10", "ssim_p90"):
+                if not -1.0 <= getattr(row, column) <= 1.0:
+                    bad(row, f"{column} {getattr(row, column)!r} outside [-1, 1]")
+            if not 0 <= row.n_unchanged <= row.n_images or row.n_unchanged != int(row.n_unchanged):
+                bad(row, f"n_unchanged {row.n_unchanged!r} not an integer in [0, n_images]")
+            if not 0.0 <= row.mean_range_levels <= 255.0 or abs(row.mean_shift_levels) > 255.0:
+                bad(row, "mean_range_levels / mean_shift_levels outside the 8-bit range")
+            if not row.psnr_p10 <= row.psnr_median <= row.psnr_p90:
+                bad(row, "PSNR p10 <= median <= p90 violated")
+            if not row.ssim_p10 <= row.ssim_median <= row.ssim_p90:
+                bad(row, "SSIM p10 <= median <= p90 violated")
+            if abs(row.frac_changed - (1.0 - row.n_unchanged / row.n_images)) > 1e-6:
+                bad(row, "frac_changed is inconsistent with n_unchanged")
+    if problems:
+        raise AuditError("; ".join(problems[:20]) + (f"; ... (+{len(problems) - 20} more)" if len(problems) > 20 else ""))
+    order = {k: i for i, k in enumerate(expected)}
+    return audit.assign(_o=[order[k] for k in keys]).sort_values("_o").drop(columns="_o").reset_index(drop=True)
+
+
 def evaluate_criteria(audit: pd.DataFrame) -> Dict[str, Dict[str, object]]:
-    """Check C1-C3 on an audit table; returns {criterion: {"passed": bool, "failures": [...]}}."""
+    """Check C1-C3 on a VALIDATED audit table; returns {criterion: {"passed": bool, "failures": [...]}}."""
+    audit = validate_audit(audit)
     failures: Dict[str, List[str]] = {key: [] for key in CRITERIA}
-    for (dataset, family), group in audit.groupby(["dataset", "family"]):
+    for (dataset, family), group in audit.groupby(["dataset", "family"], sort=False):
         group = group.sort_values("severity")
         if not (np.all(np.diff(group["psnr_median"]) < 0) and np.all(np.diff(group["ssim_mean"]) < 0)):
             failures["C1"].append(f"{dataset}/{family}")
@@ -138,25 +252,50 @@ def evaluate_criteria(audit: pd.DataFrame) -> Dict[str, Dict[str, object]]:
             for key in CRITERIA}
 
 
-def freeze_ladder(audit: pd.DataFrame, criteria: Dict[str, Dict[str, object]]) -> None:
-    """Write the frozen-ladder record. Refuses to freeze if any criterion failed."""
-    failed = [key for key, result in criteria.items() if not result["passed"]]
+def serialise_audit(audit: pd.DataFrame) -> str:
+    """The exact CSV text written to AUDIT_CSV (its SHA-256 is recorded in the frozen manifest)."""
+    return audit.to_csv(index=False, float_format=AUDIT_CSV_FLOAT_FORMAT, lineterminator="\n")
+
+
+def freeze_ladder(audit: pd.DataFrame) -> None:
+    """Validate the audit, recompute C1-C3 from it, and write the frozen-ladder record.
+
+    Takes only the audit table: the criteria are never accepted from the caller. Raises AuditError
+    if the table is not the complete audit of the current ladder and FreezeRefused if any
+    criterion fails; in both cases nothing is written.
+    """
+    audit = validate_audit(audit)
+    criteria = evaluate_criteria(audit)
+    if set(criteria) != set(REQUIRED_CRITERIA):  # an empty or partial evaluation must never pass
+        raise FreezeRefused(f"cannot freeze: criteria {sorted(criteria)} evaluated, "
+                            f"{list(REQUIRED_CRITERIA)} required")
+    failed = {key: result["failures"] for key, result in criteria.items() if not result["passed"]}
     if failed:
-        raise RuntimeError(f"cannot freeze: criteria {failed} failed; see evaluate_criteria()")
+        raise FreezeRefused(f"cannot freeze: criteria failed: {failed}")
     import skimage
 
+    previous = None
+    if degradations.FROZEN_LADDER_PATH.exists():
+        try:
+            previous = json.loads(degradations.FROZEN_LADDER_PATH.read_text()).get("ladder_fingerprint")
+        except ValueError:
+            previous = None
     record = {
         "ladder_fingerprint": degradations.ladder_fingerprint(),
+        "supersedes_fingerprint": previous if previous != degradations.ladder_fingerprint() else None,
         "degradation_version": degradations.DEGRADATION_VERSION,
         "frozen_on": datetime.date.today().isoformat(),
         "statement": "Frozen after a model-independent PSNR/SSIM audit on a clean-training subset. "
                      "No model had been trained or evaluated at this point.",
         "ladders": {family: list(values) for family, values in degradations.LADDERS.items()},
         "severity_names": list(degradations.SEVERITY_NAMES),
+        "specification": json.loads(json.dumps(degradations.ladder_spec())),
         "calibration": {"datasets": list(CALIBRATION_DATASETS), "per_class": CALIBRATION_PER_CLASS,
+                        "n_images_per_row": CALIBRATION_N_IMAGES,
                         "seed": config.SEED, "source": "clean training images",
                         "ssim_settings": SSIM_SETTINGS, "skimage_version": skimage.__version__,
-                        "audit_csv": AUDIT_CSV.name},
+                        "audit_csv": AUDIT_CSV.name,
+                        "audit_csv_sha256": hashlib.sha256(serialise_audit(audit).encode()).hexdigest()},
         "criteria": criteria,
     }
     degradations.FROZEN_LADDER_PATH.write_text(json.dumps(record, indent=2) + "\n")
@@ -167,13 +306,14 @@ def main() -> None:
     parser.add_argument("--freeze", action="store_true", help="write severity_ladder_frozen.json if all criteria pass")
     args = parser.parse_args()
     config.METRICS_DIR.mkdir(parents=True, exist_ok=True)
-    audit = run_audit()
-    audit.to_csv(AUDIT_CSV, index=False, float_format="%.5g")
+    audit = validate_audit(run_audit())
+    with open(AUDIT_CSV, "w", newline="") as handle:
+        handle.write(serialise_audit(audit))
     criteria = evaluate_criteria(audit)
     for key, result in criteria.items():
         print(f"{key}: {'PASS' if result['passed'] else 'FAIL'}  {result['description']}  {result['failures'] or ''}")
     if args.freeze:
-        freeze_ladder(audit, criteria)
+        freeze_ladder(audit)
         print(f"frozen -> {degradations.FROZEN_LADDER_PATH}")
 
 

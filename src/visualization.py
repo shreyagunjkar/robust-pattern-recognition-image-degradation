@@ -41,7 +41,8 @@ def plot_degradation_grid(dataset: str, family: str, path: Optional[Path] = None
     fig, axes = plt.subplots(GRID_CLASSES, 6, figsize=(8.4, 1.38 * GRID_CLASSES + 0.9),
                              facecolor=SURFACE)
     for col in range(6):
-        shown = degradations.degrade(clean[picks], family, col, ids[picks], stream="train")
+        shown = degradations.degrade(clean[picks], family, col, ids[picks], stream="train",
+                                     allow_unfrozen=True)  # illustrations may precede the freeze
         value = degradations.severity_value(family, col)
         header = "clean" if value is None else (
             f"{col} {degradations.SEVERITY_NAMES[col].replace('_', ' ')}\n"

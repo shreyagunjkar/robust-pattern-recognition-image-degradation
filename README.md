@@ -119,10 +119,13 @@ five severities each plus clean (21 conditions). Full definitions, the audit and
   Contrast uses one scalar mean per image over all pixels and channels. Brightness is positive only.
 - Noise is keyed by `(seed, realisation, split, original image id)`, so it is independent of
   batching and order, and every model receives identical degraded arrays through `get_degraded`.
-  Caches are named after a fingerprint of the source data, parameters, seed and implementation version.
+  Caches are named after a fingerprint of the source data, parameters, declared specification (including the
+  noise generator and stream ids), seed and `DEGRADATION_VERSION`. The fingerprint covers the declared specification, not the
+  code: changing what a transformation does requires a manual version bump and re-freeze.
 - Severities were audited with PSNR/SSIM on a fixed subset of clean **training** images against criteria
   declared in advance, then **frozen** (`results/metrics/severity_ladder_frozen.json`) before any model
-  existed. `degrade()` refuses to run if the ladder or definitions change. PSNR/SSIM comparisons across
+  existed. `degrade()` / `get_degraded()` refuse to run if the frozen manifest is missing or the declared definitions differ from it
+  (`freeze_ladder` recomputes the criteria from a validated audit; nothing is accepted from the caller). PSNR/SSIM comparisons across
   families do not indicate equal recognition difficulty (brightness is worst by PSNR but best by SSIM at severity 5).
 
 **Evaluation rule for later phases:** models are trained and tuned once on the primary data and then
