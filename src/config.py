@@ -19,6 +19,9 @@ RESULTS_DIR = PROJECT_ROOT / "results"
 METRICS_DIR = RESULTS_DIR / "metrics"
 PLOTS_DIR = RESULTS_DIR / "plots"
 CONFUSION_DIR = RESULTS_DIR / "confusion_matrices"
+PREDICTIONS_DIR = RESULTS_DIR / "predictions"  # per-image test predictions (paired tests, Phase 5+)
+MODEL_META_DIR = METRICS_DIR / "models"  # tuning tables and file hashes of the frozen models
+MODELS_DIR = PROJECT_ROOT / "models"  # trained model files (git-ignored: large)
 
 SEED = 42
 

@@ -1,0 +1,104 @@
+{
+  "dataset": "cifair10",
+  "model": "lda_hog",
+  "title": "LDA on HOG features (ablation)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "shrinkage": 0.001,
+        "val_accuracy": 0.5454545454545454,
+        "val_macro_f1": 0.5451214388680781,
+        "fit_seconds": 1.26,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.01,
+        "val_accuracy": 0.5482954545454546,
+        "val_macro_f1": 0.5482135444054472,
+        "fit_seconds": 1.09,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.05,
+        "val_accuracy": 0.5503246753246753,
+        "val_macro_f1": 0.5502852897840247,
+        "fit_seconds": 1.07,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.1,
+        "val_accuracy": 0.5515422077922078,
+        "val_macro_f1": 0.5513682285108036,
+        "fit_seconds": 1.09,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.3,
+        "val_accuracy": 0.5501217532467533,
+        "val_macro_f1": 0.5494353663921748,
+        "fit_seconds": 1.09,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": "auto",
+        "val_accuracy": 0.5503246753246753,
+        "val_macro_f1": 0.550120364924212,
+        "fit_seconds": 1.66,
+        "n_fit": 45000
+      }
+    ],
+    "selected": {
+      "shrinkage": 0.1
+    },
+    "selected_at_grid_edge": {
+      "shrinkage": false
+    }
+  },
+  "hog_params": {
+    "orientations": 9,
+    "pixels_per_cell": [
+      4,
+      4
+    ],
+    "cells_per_block": [
+      2,
+      2
+    ],
+    "block_norm": "L2-Hys",
+    "transform_sqrt": false
+  },
+  "data": {
+    "train_n": 45000,
+    "val_n": 4928,
+    "x_train_sha256": "e9955df8625d4756eafc5e6900c01343ab8971ec1d407e65f3db2ea6ae8ca750",
+    "y_train_sha256": "f2ed63e68039660785a644ac2d7597d4bd37b424c19f9f288432a838ed28c50c",
+    "x_val_sha256": "c8184973560e3db6cba5a049e68561154bf57d7cc9e9f1c5834889847604fe40",
+    "y_val_sha256": "ac2bd1f904c60376d91aca2d5bdbb26109c599ff89c3d4358250ea17cfebd4e8",
+    "train_idx_sha256": "f88f436b484789f28273fa0f9105bca4d93d0a59366f153d740a1dbfc78c8c5a"
+  },
+  "files": [
+    {
+      "file": "models/cifair10/lda_hog.joblib",
+      "sha256": "8c60f526e4fab53d55cb1bee77d59290b8f2d2726f281ae3885addf59a34b708",
+      "seed": 42,
+      "val_accuracy": 0.5515422077922078,
+      "val_macro_f1": 0.5513682285108036,
+      "fit_seconds": 1.1
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

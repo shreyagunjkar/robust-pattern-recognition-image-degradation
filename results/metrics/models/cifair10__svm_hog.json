@@ -1,0 +1,112 @@
+{
+  "dataset": "cifair10",
+  "model": "svm_hog",
+  "title": "Support Vector Machine with Histogram of Oriented Gradients features (SVM + HOG)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "val_accuracy": 0.5456574675324676,
+        "val_macro_f1": 0.5452213587713849,
+        "fit_seconds": 37.36,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "val_accuracy": 0.5594561688311688,
+        "val_macro_f1": 0.5593765282450331,
+        "fit_seconds": 44.68,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "val_accuracy": 0.5582386363636364,
+        "val_macro_f1": 0.5591114038977374,
+        "fit_seconds": 57.24,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "val_accuracy": 0.5509334415584416,
+        "val_macro_f1": 0.5517847315014117,
+        "fit_seconds": 38.37,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "val_accuracy": 0.5679788961038961,
+        "val_macro_f1": 0.5682964675135304,
+        "fit_seconds": 48.16,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "val_accuracy": 0.5685876623376623,
+        "val_macro_f1": 0.5692805553650169,
+        "fit_seconds": 60.8,
+        "n_fit": 10000
+      }
+    ],
+    "selected": {
+      "C": 10.0,
+      "gamma_mult": 2.0
+    },
+    "selected_at_grid_edge": {
+      "C": true,
+      "gamma_mult": true
+    }
+  },
+  "hog_params": {
+    "orientations": 9,
+    "pixels_per_cell": [
+      4,
+      4
+    ],
+    "cells_per_block": [
+      2,
+      2
+    ],
+    "block_norm": "L2-Hys",
+    "transform_sqrt": false
+  },
+  "data": {
+    "train_n": 45000,
+    "val_n": 4928,
+    "x_train_sha256": "e9955df8625d4756eafc5e6900c01343ab8971ec1d407e65f3db2ea6ae8ca750",
+    "y_train_sha256": "f2ed63e68039660785a644ac2d7597d4bd37b424c19f9f288432a838ed28c50c",
+    "x_val_sha256": "c8184973560e3db6cba5a049e68561154bf57d7cc9e9f1c5834889847604fe40",
+    "y_val_sha256": "ac2bd1f904c60376d91aca2d5bdbb26109c599ff89c3d4358250ea17cfebd4e8",
+    "train_idx_sha256": "f88f436b484789f28273fa0f9105bca4d93d0a59366f153d740a1dbfc78c8c5a"
+  },
+  "files": [
+    {
+      "file": "models/cifair10/svm_hog.joblib",
+      "sha256": "4340aee52c8584c93d42cc6574c2a06ea52d41fa7977ab71bcc7e69347779156",
+      "seed": 42,
+      "val_accuracy": 0.6377840909090909,
+      "val_macro_f1": 0.6388079033578411,
+      "fit_seconds": 1016.0
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

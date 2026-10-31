@@ -1,0 +1,144 @@
+{
+  "dataset": "fashion_mnist",
+  "model": "cnn",
+  "title": "Convolutional Neural Network (CNN)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "lr": 0.001,
+        "weight_decay": 0.0,
+        "epochs": 10,
+        "val_accuracy": 0.9294011616262768,
+        "best_epoch": 10,
+        "fit_seconds": 371.5,
+        "n_fit": 50000
+      },
+      {
+        "lr": 0.001,
+        "weight_decay": 0.0005,
+        "epochs": 10,
+        "val_accuracy": 0.9301021430002003,
+        "best_epoch": 9,
+        "fit_seconds": 11257.7,
+        "n_fit": 50000
+      },
+      {
+        "lr": 0.003,
+        "weight_decay": 0.0,
+        "epochs": 10,
+        "val_accuracy": 0.9340076106549169,
+        "best_epoch": 10,
+        "fit_seconds": 560.1,
+        "n_fit": 50000
+      },
+      {
+        "lr": 0.003,
+        "weight_decay": 0.0005,
+        "epochs": 10,
+        "val_accuracy": 0.9329060684958943,
+        "best_epoch": 10,
+        "fit_seconds": 418.7,
+        "n_fit": 50000
+      }
+    ],
+    "selected": {
+      "lr": 0.003,
+      "weight_decay": 0.0,
+      "epochs": 10
+    },
+    "selected_at_grid_edge": {
+      "lr": true,
+      "weight_decay": true
+    }
+  },
+  "hog_params": null,
+  "data": {
+    "train_n": 50000,
+    "val_n": 9986,
+    "x_train_sha256": "c1f11835494cdc622688a842949bca74bffcb0a11cf4c0d500051d25c83bc48f",
+    "y_train_sha256": "1e325f3035faff5b272914f3d87c0370d11d6680c1ad5b46192992bde096335c",
+    "x_val_sha256": "0bd97eb3c8fad0f39b4ee7719495483fe707cca71d47bf4e36ecd1e43726608d",
+    "y_val_sha256": "119826c0eae692f8d98020b9ac0772b294d7b1fd8f8471db1aa024e869cdbba5",
+    "train_idx_sha256": "e9093defb03e1da926602ee5a51efdff66c38bc75eaa89eca4eb13835dab8342"
+  },
+  "files": [
+    {
+      "file": "models/fashion_mnist/cnn.pt",
+      "sha256": "051b0da8b46d305b5d2e67f55922391d967aa70d6332852e407804269ab27e56",
+      "seed": 42,
+      "val_accuracy": 0.9340076106549169,
+      "val_macro_f1": 0.9339970100614753,
+      "fit_seconds": 560.1,
+      "best_epoch": 10,
+      "val_accuracy_by_epoch": [
+        0.8005,
+        0.8683,
+        0.881,
+        0.8941,
+        0.9151,
+        0.9202,
+        0.927,
+        0.9301,
+        0.9339,
+        0.934
+      ]
+    },
+    {
+      "file": "models/fashion_mnist/cnn_seed43.pt",
+      "sha256": "ea21185957275c06c2ed5d293461c5d9303364c0d5068978cbfb50da5e7749d8",
+      "seed": 43,
+      "val_accuracy": 0.936310835169237,
+      "val_macro_f1": 0.9366223497911903,
+      "fit_seconds": 441.7,
+      "best_epoch": 10,
+      "val_accuracy_by_epoch": [
+        0.7966,
+        0.8679,
+        0.8736,
+        0.9101,
+        0.908,
+        0.9238,
+        0.924,
+        0.9318,
+        0.9358,
+        0.9363
+      ]
+    },
+    {
+      "file": "models/fashion_mnist/cnn_seed44.pt",
+      "sha256": "1fce63259217c897d75c68bc0a4d2eb6e4186cc8f9618c077cc087ab60c68246",
+      "seed": 44,
+      "val_accuracy": 0.9365111155617865,
+      "val_macro_f1": 0.9368276536257506,
+      "fit_seconds": 469.4,
+      "best_epoch": 10,
+      "val_accuracy_by_epoch": [
+        0.7681,
+        0.8484,
+        0.8831,
+        0.8996,
+        0.9174,
+        0.9185,
+        0.9303,
+        0.9252,
+        0.9363,
+        0.9365
+      ]
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

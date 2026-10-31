@@ -1,0 +1,92 @@
+{
+  "dataset": "cifair10",
+  "model": "lda",
+  "title": "Linear Discriminant Analysis (LDA)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "shrinkage": 0.001,
+        "val_accuracy": 0.38961038961038963,
+        "val_macro_f1": 0.38858738006868904,
+        "fit_seconds": 5.96,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.01,
+        "val_accuracy": 0.39549512987012986,
+        "val_macro_f1": 0.39405353210692085,
+        "fit_seconds": 5.71,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.05,
+        "val_accuracy": 0.4125405844155844,
+        "val_macro_f1": 0.41069862298559645,
+        "fit_seconds": 5.57,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.1,
+        "val_accuracy": 0.41375811688311687,
+        "val_macro_f1": 0.4119203815805075,
+        "fit_seconds": 5.38,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.3,
+        "val_accuracy": 0.4107142857142857,
+        "val_macro_f1": 0.40822295379083523,
+        "fit_seconds": 5.44,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": "auto",
+        "val_accuracy": 0.3918425324675325,
+        "val_macro_f1": 0.39031019460972594,
+        "fit_seconds": 11.65,
+        "n_fit": 45000
+      }
+    ],
+    "selected": {
+      "shrinkage": 0.1
+    },
+    "selected_at_grid_edge": {
+      "shrinkage": false
+    }
+  },
+  "hog_params": null,
+  "data": {
+    "train_n": 45000,
+    "val_n": 4928,
+    "x_train_sha256": "e9955df8625d4756eafc5e6900c01343ab8971ec1d407e65f3db2ea6ae8ca750",
+    "y_train_sha256": "f2ed63e68039660785a644ac2d7597d4bd37b424c19f9f288432a838ed28c50c",
+    "x_val_sha256": "c8184973560e3db6cba5a049e68561154bf57d7cc9e9f1c5834889847604fe40",
+    "y_val_sha256": "ac2bd1f904c60376d91aca2d5bdbb26109c599ff89c3d4358250ea17cfebd4e8",
+    "train_idx_sha256": "f88f436b484789f28273fa0f9105bca4d93d0a59366f153d740a1dbfc78c8c5a"
+  },
+  "files": [
+    {
+      "file": "models/cifair10/lda.joblib",
+      "sha256": "eca5fa83221e42ddc0a4d4e259ecb7c83ab0e06d11a1660b58f2e643d836c3ac",
+      "seed": 42,
+      "val_accuracy": 0.41375811688311687,
+      "val_macro_f1": 0.4119203815805075,
+      "fit_seconds": 5.8
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "dataset": "fashion_mnist",
+  "model": "lda",
+  "title": "Linear Discriminant Analysis (LDA)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "shrinkage": 0.001,
+        "val_accuracy": 0.8296615261365913,
+        "val_macro_f1": 0.8306050227926978,
+        "fit_seconds": 0.32,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.01,
+        "val_accuracy": 0.8296615261365913,
+        "val_macro_f1": 0.8305945814275433,
+        "fit_seconds": 0.31,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.05,
+        "val_accuracy": 0.829761666332866,
+        "val_macro_f1": 0.830630585842351,
+        "fit_seconds": 0.31,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.1,
+        "val_accuracy": 0.827458441818546,
+        "val_macro_f1": 0.8283355369785156,
+        "fit_seconds": 0.31,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.3,
+        "val_accuracy": 0.822351291808532,
+        "val_macro_f1": 0.8233612796505059,
+        "fit_seconds": 0.31,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": "auto",
+        "val_accuracy": 0.8281594231924695,
+        "val_macro_f1": 0.829154043006006,
+        "fit_seconds": 0.39,
+        "n_fit": 50000
+      }
+    ],
+    "selected": {
+      "shrinkage": 0.05
+    },
+    "selected_at_grid_edge": {
+      "shrinkage": false
+    }
+  },
+  "hog_params": null,
+  "data": {
+    "train_n": 50000,
+    "val_n": 9986,
+    "x_train_sha256": "c1f11835494cdc622688a842949bca74bffcb0a11cf4c0d500051d25c83bc48f",
+    "y_train_sha256": "1e325f3035faff5b272914f3d87c0370d11d6680c1ad5b46192992bde096335c",
+    "x_val_sha256": "0bd97eb3c8fad0f39b4ee7719495483fe707cca71d47bf4e36ecd1e43726608d",
+    "y_val_sha256": "119826c0eae692f8d98020b9ac0772b294d7b1fd8f8471db1aa024e869cdbba5",
+    "train_idx_sha256": "e9093defb03e1da926602ee5a51efdff66c38bc75eaa89eca4eb13835dab8342"
+  },
+  "files": [
+    {
+      "file": "models/fashion_mnist/lda.joblib",
+      "sha256": "3d125f0e4c0b699bb1960c3769b7a2edbe639dd4f8e1df455943c725236a830f",
+      "seed": 42,
+      "val_accuracy": 0.829761666332866,
+      "val_macro_f1": 0.830630585842351,
+      "fit_seconds": 0.3
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

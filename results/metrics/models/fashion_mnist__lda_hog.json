@@ -1,0 +1,104 @@
+{
+  "dataset": "fashion_mnist",
+  "model": "lda_hog",
+  "title": "LDA on HOG features (ablation)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "shrinkage": 0.001,
+        "val_accuracy": 0.8707190066092529,
+        "val_macro_f1": 0.8714352844881249,
+        "fit_seconds": 0.69,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.01,
+        "val_accuracy": 0.8697176046465052,
+        "val_macro_f1": 0.870432763699917,
+        "fit_seconds": 0.66,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.05,
+        "val_accuracy": 0.8691167634688564,
+        "val_macro_f1": 0.8698298349930859,
+        "fit_seconds": 0.75,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.1,
+        "val_accuracy": 0.8676146605247347,
+        "val_macro_f1": 0.8683363098571519,
+        "fit_seconds": 0.8,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": 0.3,
+        "val_accuracy": 0.8614059683556979,
+        "val_macro_f1": 0.8620315660168284,
+        "fit_seconds": 0.76,
+        "n_fit": 50000
+      },
+      {
+        "shrinkage": "auto",
+        "val_accuracy": 0.8697176046465052,
+        "val_macro_f1": 0.8704280684169939,
+        "fit_seconds": 1.16,
+        "n_fit": 50000
+      }
+    ],
+    "selected": {
+      "shrinkage": 0.001
+    },
+    "selected_at_grid_edge": {
+      "shrinkage": true
+    }
+  },
+  "hog_params": {
+    "orientations": 9,
+    "pixels_per_cell": [
+      4,
+      4
+    ],
+    "cells_per_block": [
+      2,
+      2
+    ],
+    "block_norm": "L2-Hys",
+    "transform_sqrt": false
+  },
+  "data": {
+    "train_n": 50000,
+    "val_n": 9986,
+    "x_train_sha256": "c1f11835494cdc622688a842949bca74bffcb0a11cf4c0d500051d25c83bc48f",
+    "y_train_sha256": "1e325f3035faff5b272914f3d87c0370d11d6680c1ad5b46192992bde096335c",
+    "x_val_sha256": "0bd97eb3c8fad0f39b4ee7719495483fe707cca71d47bf4e36ecd1e43726608d",
+    "y_val_sha256": "119826c0eae692f8d98020b9ac0772b294d7b1fd8f8471db1aa024e869cdbba5",
+    "train_idx_sha256": "e9093defb03e1da926602ee5a51efdff66c38bc75eaa89eca4eb13835dab8342"
+  },
+  "files": [
+    {
+      "file": "models/fashion_mnist/lda_hog.joblib",
+      "sha256": "f49ccf9bf14a0a5155407dd375ee6ec8abeb5bf5c7c518b64aa918d46451e53f",
+      "seed": 42,
+      "val_accuracy": 0.8707190066092529,
+      "val_macro_f1": 0.8714352844881249,
+      "fit_seconds": 0.7
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}
