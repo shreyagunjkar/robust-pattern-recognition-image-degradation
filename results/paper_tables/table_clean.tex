@@ -1,0 +1,25 @@
+\begin{table}[t]
+\centering
+\caption{Clean test accuracy and macro-F1 of the frozen models (CNN: mean over 3 seeds, range in parentheses).}
+\label{tab:clean}
+\small
+\begin{tabular}{llcc}
+\toprule
+Dataset & Model & Accuracy & Macro-F1 \\
+\midrule
+Fashion-MNIST & LDA & 0.817 & 0.817 \\
+Fashion-MNIST & LDA+FS & 0.814 & 0.815 \\
+Fashion-MNIST & SVM+HOG & 0.911 & 0.911 \\
+Fashion-MNIST & SVM+HOG+FS & 0.910 & 0.910 \\
+Fashion-MNIST & CNN & 0.928 (0.927--0.928) & 0.928 \\
+Fashion-MNIST & LDA+HOG & 0.866 & 0.867 \\
+\midrule
+ciFAIR-10 & LDA & 0.405 & 0.403 \\
+ciFAIR-10 & LDA+FS & 0.394 & 0.391 \\
+ciFAIR-10 & SVM+HOG & 0.625 & 0.625 \\
+ciFAIR-10 & SVM+HOG+FS & 0.627 & 0.627 \\
+ciFAIR-10 & CNN & 0.802 (0.798--0.806) & 0.800 \\
+ciFAIR-10 & LDA+HOG & 0.537 & 0.536 \\
+\bottomrule
+\end{tabular}
+\end{table}

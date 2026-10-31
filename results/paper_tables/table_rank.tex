@@ -1,0 +1,23 @@
+\begin{table}[t]
+\centering
+\caption{Robustness ranking of the three main models (1 = highest area under the severity curve) per degradation family.}
+\label{tab:rank}
+\small
+\begin{tabular}{llccc}
+\toprule
+Dataset & Degradation & LDA & SVM+HOG & CNN \\
+\midrule
+Fashion-MNIST & Gaussian noise & 1 & 2 & 3 \\
+ & Gaussian blur & 2 & 1 & 3 \\
+ & Contrast & 2 & 1 & 3 \\
+ & Brightness & 2 & 1 & 3 \\
+ & Mean rank & 1.75 & 1.25 & 3.00 \\
+\midrule
+ciFAIR-10 & Gaussian noise & 1 & 3 & 2 \\
+ & Gaussian blur & 2 & 1 & 3 \\
+ & Contrast & 3 & 1 & 2 \\
+ & Brightness & 3 & 2 & 1 \\
+ & Mean rank & 2.25 & 1.75 & 2.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
