@@ -7,9 +7,11 @@ src/evaluate_clean.py later scores them on the clean test set exactly as they ar
 
 Tuning budgets (small, explicit and comparable; the grids are in GRIDS):
   lda, lda_hog  6 shrinkage values, each fitted on the full training set
+  lda_fs        6 shrinkage values x 4 feature fractions k_frac (ANOVA F-test selection), full training set
   svm_hog       6 configurations (C x RBF gamma multiplier), tuned on a stratified 10,000-image
                 training subset (kernel SVM cost grows super-linearly), then the chosen
                 configuration is refitted on the FULL training set
+  svm_hog_fs    the same 6 configurations x 4 feature fractions k_frac, same protocol
   cnn           4 configurations (learning rate x weight decay), each trained for CNN_EPOCHS epochs on
                 the full training set with the best-validation epoch kept; the winner is then
                 retrained with CNN_EXTRA_SEEDS further seeds to expose training-seed variance
@@ -38,10 +40,17 @@ N_CLASSES = 10  # both datasets
 SVM_TUNE_PER_CLASS = 1000
 CNN_EPOCHS = 10
 CNN_EXTRA_SEEDS = 2  # CNN seeds: SEED, SEED + 1, SEED + 2
+# fraction of the features kept by the ANOVA F-test selection; 'keep everything' is deliberately not in the grid,
+# so a selection model always selects (the no-selection models lda / svm_hog are the 100% reference)
+K_FRACS = (0.1, 0.25, 0.5, 0.75)
 GRIDS: Dict[str, List[Dict[str, object]]] = {
     "lda": [{"shrinkage": s} for s in (0.001, 0.01, 0.05, 0.1, 0.3, "auto")],
     "lda_hog": [{"shrinkage": s} for s in (0.001, 0.01, 0.05, 0.1, 0.3, "auto")],
     "svm_hog": [{"C": c, "gamma_mult": g} for c, g in itertools.product((1.0, 10.0), (0.5, 1.0, 2.0))],
+    "lda_fs": [{"shrinkage": s, "k_frac": f} for s, f in
+               itertools.product((0.001, 0.01, 0.05, 0.1, 0.3, "auto"), K_FRACS)],
+    "svm_hog_fs": [{"C": c, "gamma_mult": g, "k_frac": f} for c, g, f in
+                   itertools.product((1.0, 10.0), (0.5, 1.0, 2.0), K_FRACS)],
     "cnn": [{"lr": lr, "weight_decay": wd} for lr, wd in itertools.product((1e-3, 3e-3), (0.0, 5e-4))],
 }
 
@@ -72,7 +81,7 @@ def _scores(y_true: np.ndarray, y_pred: np.ndarray) -> Dict[str, float]:
 def tune_sklearn(name: str, x_train, y_train, x_val, y_val, log=print) -> Tuple[Dict, List[Dict]]:
     """Grid search for lda / lda_hog / svm_hog using train and validation data only."""
     grid = GRIDS[name]
-    if name == "svm_hog":
+    if name.startswith("svm_hog"):
         chosen = stratified_subsample(y_train, SVM_TUNE_PER_CLASS, config.SEED)
         x_fit, y_fit = x_train[chosen], y_train[chosen]
     else:
@@ -122,6 +131,7 @@ def train_one(ds: ImageDataset, name: str, *, epochs: int = CNN_EPOCHS, extra_se
     x_tr, y_tr, x_val, y_val = ds.x_train, ds.y_train, ds.x_val, ds.y_val
     log(f"[{ds.name}] {name}: tuning on {len(y_tr)} train / {len(y_val)} validation images")
     files: List[Dict[str, object]] = []
+    feature_selection = None
 
     def record(model, seed: int) -> None:
         path = _model_path(root, ds.name, name, seed)
@@ -143,9 +153,14 @@ def train_one(ds: ImageDataset, name: str, *, epochs: int = CNN_EPOCHS, extra_se
     else:
         selected, table = tune_sklearn(name, x_tr, y_tr, x_val, y_val, log)
         model = SklearnModel(name, selected).fit(x_tr, y_tr)  # refit on the FULL training set
-        if name == "svm_hog":
+        if name.startswith("svm_hog"):
             log(f"    refitted on the full training set: gamma={model.gamma:.4g}, "
                 f"{int(model.estimator.n_support_.sum())} support vectors")
+        feature_selection = model.feature_selection_record()
+        if feature_selection is not None:
+            log(f"    feature selection kept {feature_selection['k']} of {feature_selection['n_features_in']} features")
+            meta_dir.mkdir(parents=True, exist_ok=True)
+            np.save(meta_dir / f"{ds.name}__{name}__selected_mask.npy", model.selector.get_support())
         record(model, config.SEED)
 
     meta = {
@@ -154,7 +169,8 @@ def train_one(ds: ImageDataset, name: str, *, epochs: int = CNN_EPOCHS, extra_se
         "selection": {"metric": "clean validation accuracy", "ties": "earlier grid entry",
                       "grid": table, "selected": selected, "selected_at_grid_edge": at_grid_edge(GRIDS[name], selected)},
         "hog_params": {k: list(v) if isinstance(v, tuple) else v for k, v in HOG_PARAMS.items()}
-        if name in ("svm_hog", "lda_hog") else None,
+        if name in ("svm_hog", "lda_hog", "svm_hog_fs") else None,
+        "feature_selection": feature_selection,
         "data": {"train_n": int(len(y_tr)), "val_n": int(len(y_val)),
                  "x_train_sha256": array_digest(x_tr), "y_train_sha256": array_digest(y_tr),
                  "x_val_sha256": array_digest(x_val), "y_val_sha256": array_digest(y_val),

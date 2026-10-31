@@ -1,0 +1,289 @@
+{
+  "dataset": "fashion_mnist",
+  "model": "svm_hog_fs",
+  "title": "SVM + HOG with ANOVA F-test feature selection on the HOG features (SVM + HOG + FS)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.1,
+        "val_accuracy": 0.8031243741237732,
+        "val_macro_f1": 0.8013878464001856,
+        "fit_seconds": 0.69,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.25,
+        "val_accuracy": 0.8460845183256559,
+        "val_macro_f1": 0.8442475617945178,
+        "fit_seconds": 1.22,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.5,
+        "val_accuracy": 0.8727218105347486,
+        "val_macro_f1": 0.8717930137862251,
+        "fit_seconds": 2.23,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.75,
+        "val_accuracy": 0.8781293811335871,
+        "val_macro_f1": 0.8773687286870612,
+        "fit_seconds": 3.3,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.8149409172841979,
+        "val_macro_f1": 0.8133713212112527,
+        "fit_seconds": 0.7,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.8550971359903865,
+        "val_macro_f1": 0.8537718462709846,
+        "fit_seconds": 1.36,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.8795313438814341,
+        "val_macro_f1": 0.8788157400322509,
+        "fit_seconds": 2.4,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.8835369517324254,
+        "val_macro_f1": 0.8829094225073477,
+        "fit_seconds": 3.76,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.8193470859202884,
+        "val_macro_f1": 0.8178523930867325,
+        "fit_seconds": 0.91,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.8627077909072702,
+        "val_macro_f1": 0.8615416255949183,
+        "fit_seconds": 1.95,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.8827358301622271,
+        "val_macro_f1": 0.8820857138166225,
+        "fit_seconds": 3.75,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.8864410174243942,
+        "val_macro_f1": 0.8859087992144271,
+        "fit_seconds": 7.65,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.1,
+        "val_accuracy": 0.8270578810334468,
+        "val_macro_f1": 0.8259144068673387,
+        "fit_seconds": 0.73,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.25,
+        "val_accuracy": 0.8595033046264771,
+        "val_macro_f1": 0.8589706562336514,
+        "fit_seconds": 1.33,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.5,
+        "val_accuracy": 0.8792309232926097,
+        "val_macro_f1": 0.8789340026493224,
+        "fit_seconds": 2.12,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.75,
+        "val_accuracy": 0.880432605647907,
+        "val_macro_f1": 0.8801221460239997,
+        "fit_seconds": 3.19,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.8303625075105148,
+        "val_macro_f1": 0.8294810403961008,
+        "fit_seconds": 0.85,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.8619066693370719,
+        "val_macro_f1": 0.8616140462636197,
+        "fit_seconds": 1.52,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.8822351291808532,
+        "val_macro_f1": 0.8821440942688483,
+        "fit_seconds": 2.85,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.886040456639295,
+        "val_macro_f1": 0.8858682226415306,
+        "fit_seconds": 4.42,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.8262567594632485,
+        "val_macro_f1": 0.8250965811465287,
+        "fit_seconds": 1.06,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.8666132585619868,
+        "val_macro_f1": 0.8662608362489573,
+        "fit_seconds": 2.19,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.8884438213498899,
+        "val_macro_f1": 0.8881184927523073,
+        "fit_seconds": 4.25,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.8902463448828359,
+        "val_macro_f1": 0.8900262640014025,
+        "fit_seconds": 6.83,
+        "n_fit": 10000
+      }
+    ],
+    "selected": {
+      "C": 10.0,
+      "gamma_mult": 2.0,
+      "k_frac": 0.75
+    },
+    "selected_at_grid_edge": {
+      "C": true,
+      "gamma_mult": true,
+      "k_frac": true
+    }
+  },
+  "hog_params": {
+    "orientations": 9,
+    "pixels_per_cell": [
+      4,
+      4
+    ],
+    "cells_per_block": [
+      2,
+      2
+    ],
+    "block_norm": "L2-Hys",
+    "transform_sqrt": false
+  },
+  "feature_selection": {
+    "method": "ANOVA F-test (sklearn f_classif) with SelectKBest, fitted on the clean training split",
+    "n_features_in": 1296,
+    "k": 972,
+    "k_frac": 0.75,
+    "selected_mask_sha256": "25b31ad8ef00812dd6e226ef065fd13a9f917523698ed8a08eb34a3d318ee49d"
+  },
+  "data": {
+    "train_n": 50000,
+    "val_n": 9986,
+    "x_train_sha256": "c1f11835494cdc622688a842949bca74bffcb0a11cf4c0d500051d25c83bc48f",
+    "y_train_sha256": "1e325f3035faff5b272914f3d87c0370d11d6680c1ad5b46192992bde096335c",
+    "x_val_sha256": "0bd97eb3c8fad0f39b4ee7719495483fe707cca71d47bf4e36ecd1e43726608d",
+    "y_val_sha256": "119826c0eae692f8d98020b9ac0772b294d7b1fd8f8471db1aa024e869cdbba5",
+    "train_idx_sha256": "e9093defb03e1da926602ee5a51efdff66c38bc75eaa89eca4eb13835dab8342"
+  },
+  "files": [
+    {
+      "file": "models/fashion_mnist/svm_hog_fs.joblib",
+      "sha256": "d9a9270e2f3cf158205ae70b056dc9cbcba277518bd3a202105d330935009284",
+      "seed": 42,
+      "val_accuracy": 0.9122771880632886,
+      "val_macro_f1": 0.9120529363587447,
+      "fit_seconds": 134.4
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

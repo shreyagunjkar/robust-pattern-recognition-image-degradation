@@ -8,6 +8,13 @@ all of them and nothing is computed from test-time statistics:
   svm_hog   uint8 -> /255 -> HOG -> RBF-kernel SVM          (HOG is computed AFTER degradation)
   cnn       uint8 -> /255 -> frozen normalisation -> small convolutional network
   lda_hog   uint8 -> /255 -> HOG -> LDA                     (appendix ablation, not a main model)
+  lda_fs    like lda, with ANOVA F-test feature selection (keep the top k_frac of the pixels) before the LDA
+  svm_hog_fs  uint8 -> /255 -> HOG -> ANOVA F-test selection (top k_frac of the HOG features) -> SVM
+
+Feature selection (the course requires a feature-selection algorithm): a filter method, sklearn
+SelectKBest with f_classif (one-way ANOVA F statistic of each feature against the class label). It is
+fitted on the clean training split only, k_frac is tuned on clean validation accuracy, and the selected set
+is frozen with the model, so degraded test images are always reduced to the same features.
 
 HOG policy (fixed, not tuned): input on the [0, 1] scale, 9 orientations, 4x4-pixel cells, 2x2-cell
 blocks, L2-Hys block normalisation, no square-root compression. Colour images use skimage's
@@ -19,12 +26,15 @@ from __future__ import annotations
 from .classical import HOG_PARAMS, SklearnModel, hog_features
 from .cnn import CNNModel, build_cnn
 
-MODEL_NAMES = ("lda", "svm_hog", "cnn", "lda_hog")
+MODEL_NAMES = ("lda", "svm_hog", "cnn", "lda_hog", "lda_fs", "svm_hog_fs")
 MAIN_MODELS = ("lda", "svm_hog", "cnn")
+FS_MODELS = ("lda_fs", "svm_hog_fs")  # the same models with an ANOVA F-test feature-selection stage
 MODEL_TITLES = {"lda": "Linear Discriminant Analysis (LDA)",
                 "svm_hog": "Support Vector Machine with Histogram of Oriented Gradients features (SVM + HOG)",
                 "cnn": "Convolutional Neural Network (CNN)",
-                "lda_hog": "LDA on HOG features (ablation)"}
+                "lda_hog": "LDA on HOG features (ablation)",
+                "lda_fs": "LDA with ANOVA F-test feature selection on pixels (LDA + FS)",
+                "svm_hog_fs": "SVM + HOG with ANOVA F-test feature selection on the HOG features (SVM + HOG + FS)"}
 
 
 def load_model(name: str, path):

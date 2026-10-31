@@ -51,6 +51,10 @@ def check_preprocessing(model, meta: Dict[str, object], meta_path: Path) -> None
     used = None if used is None else normalized_hog_params(used)
     if used != recorded:
         raise FrozenModelError(f"{meta_path.name}: HOG settings {used} differ from the recorded {recorded}")
+    selection = getattr(model, "feature_selection_record", lambda: None)()
+    if selection != meta.get("feature_selection"):
+        raise FrozenModelError(f"{meta_path.name}: feature selection {selection} differs from the recorded "
+                               f"{meta.get('feature_selection')}")
 
 
 def evaluate_models(ds: ImageDataset, meta_dir: Path, models=MODEL_NAMES, log=print) -> List[Dict[str, object]]:

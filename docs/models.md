@@ -12,6 +12,8 @@ training), `src/evaluate_clean.py` (clean test scoring), `src/metrics.py`.
 | **SVM + HOG** — Support Vector Machine with Histogram of Oriented Gradients features | `/255` → HOG → RBF-kernel SVM (C and γ tuned) |
 | **CNN** — Convolutional Neural Network | `/255` → frozen `(x − μ) / σ` → 5 conv layers → global average pooling → linear |
 | *LDA + HOG* (ablation, appendix) | `/255` → HOG → LDA |
+| **LDA + FS** — LDA with feature selection | `/255` → `(x − μ) / σ` → flatten → ANOVA F-test, keep the top `k_frac` of the pixels → LDA |
+| **SVM + HOG + FS** — SVM + HOG with feature selection | `/255` → HOG → ANOVA F-test, keep the top `k_frac` of the HOG features → RBF-SVM |
 
 Each model owns its whole input pipeline, so the same degraded uint8 array (from `get_degraded`) is
 passed to every model. HOG is computed **after** degradation, as part of the model. Normalisation
@@ -38,6 +40,18 @@ statistics and never statistics of a degraded batch. Device: CUDA if present, ot
 42, 43 and 44 are trained with the selected configuration to expose training-seed variance; LDA and
 SVM are deterministic.
 
+## Feature selection (ANOVA F-test)
+
+The course requires a feature-selection algorithm. `lda_fs` and `svm_hog_fs` insert scikit-learn
+`SelectKBest(f_classif)` between the features and the classifier. The F scores are fitted on the **clean training
+split only**; `k = round(k_frac · D)` with `k_frac` ∈ {0.10, 0.25, 0.50, 0.75} chosen on clean validation accuracy
+together with the classifier's hyperparameters (100% is deliberately not in the grid, so a `_fs` model always
+selects; the model without selection is the 100% reference). The selection is frozen with the model: its size and a
+hash of the selected mask are stored in the metadata (`feature_selection`), the mask is saved as
+`results/metrics/models/<dataset>__<model>__selected_mask.npy`, and evaluation refuses a model whose selection differs
+from the record. For the SVM, γ = multiplier / (D_kept · var(X_kept)). The CNN learns its features and has no
+separate selection stage. The un-selected models are kept as the baselines.
+
 ## Tuning budgets
 
 Selection metric: clean validation accuracy; ties go to the earlier grid entry. The budgets are small
@@ -46,7 +60,9 @@ and stated so that no model is silently favoured:
 | Model | Grid | Configurations | Notes |
 |---|---|---|---|
 | LDA, LDA + HOG | shrinkage ∈ {0.001, 0.01, 0.05, 0.1, 0.3, auto} | 6 | full training set |
+| LDA + FS | shrinkage (6 values) × `k_frac` (4 values) | 24 | full training set |
 | SVM + HOG | C ∈ {1, 10} × γ-multiplier ∈ {0.5, 1, 2}, γ = multiplier / (D · var(X)) | 6 | tuned on a stratified 10,000-image training subset (kernel SVM cost), then **refitted on the full training set** |
+| SVM + HOG + FS | C × γ-multiplier (6) × `k_frac` (4 values) | 24 | same 10,000-image tuning subset, then refit on the full training set |
 | CNN | learning rate ∈ {1e-3, 3e-3} × weight decay ∈ {0, 5e-4} | 4 | full training set, 10 epochs each |
 
 `selected_at_grid_edge` in each metadata record flags hyperparameters that landed on the boundary of

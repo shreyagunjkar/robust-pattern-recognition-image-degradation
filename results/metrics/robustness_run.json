@@ -11,7 +11,9 @@
       "cnn_seed42": "051b0da8b46d305b5d2e67f55922391d967aa70d6332852e407804269ab27e56",
       "cnn_seed43": "ea21185957275c06c2ed5d293461c5d9303364c0d5068978cbfb50da5e7749d8",
       "cnn_seed44": "1fce63259217c897d75c68bc0a4d2eb6e4186cc8f9618c077cc087ab60c68246",
-      "lda_hog_seed42": "f49ccf9bf14a0a5155407dd375ee6ec8abeb5bf5c7c518b64aa918d46451e53f"
+      "lda_hog_seed42": "f49ccf9bf14a0a5155407dd375ee6ec8abeb5bf5c7c518b64aa918d46451e53f",
+      "lda_fs_seed42": "69ee5e3907c656b8bbf7f62d020b3e874260c5443fca26b9c31ec983bddba0ac",
+      "svm_hog_fs_seed42": "d9a9270e2f3cf158205ae70b056dc9cbcba277518bd3a202105d330935009284"
     },
     "cifair10": {
       "lda_seed42": "eca5fa83221e42ddc0a4d4e259ecb7c83ab0e06d11a1660b58f2e643d836c3ac",
@@ -19,7 +21,9 @@
       "cnn_seed42": "f3596ba6c7bb85af2556fac1ffe928bebaedb1ad25d30bf5b794294b3b81ca9f",
       "cnn_seed43": "6183b57e8330162811d90df55aaf591b41e859c699f45ed0eb13b6cc0689abbd",
       "cnn_seed44": "d3d3e40b43df2a4adc377875c3615b7a8b9d562bec2a5979c26fa95738d3e15a",
-      "lda_hog_seed42": "8c60f526e4fab53d55cb1bee77d59290b8f2d2726f281ae3885addf59a34b708"
+      "lda_hog_seed42": "8c60f526e4fab53d55cb1bee77d59290b8f2d2726f281ae3885addf59a34b708",
+      "lda_fs_seed42": "cb39c5c9a2428282bd3d0e9970c135718a02b18e115d2f3154d4ffc82922d1cd",
+      "svm_hog_fs_seed42": "df833d850148753554b1ba6d861f0ace781b56e279c38bc0865f319b252723cb"
     }
   }
 }

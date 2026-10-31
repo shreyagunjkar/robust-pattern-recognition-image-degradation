@@ -1,0 +1,56 @@
+{
+  "date": "2026-10-31",
+  "bootstrap_resamples": 2000,
+  "seed": 42,
+  "alpha": 0.05,
+  "chance": 0.1,
+  "pairs": [
+    [
+      "svm_hog",
+      "lda"
+    ],
+    [
+      "cnn",
+      "lda"
+    ],
+    [
+      "cnn",
+      "svm_hog"
+    ],
+    [
+      "lda_fs",
+      "lda"
+    ],
+    [
+      "svm_hog_fs",
+      "svm_hog"
+    ],
+    [
+      "lda_hog",
+      "lda"
+    ],
+    [
+      "svm_hog",
+      "lda_hog"
+    ]
+  ],
+  "models": {
+    "fashion_mnist": [
+      "cnn",
+      "lda",
+      "lda_fs",
+      "lda_hog",
+      "svm_hog",
+      "svm_hog_fs"
+    ],
+    "cifair10": [
+      "cnn",
+      "lda",
+      "lda_fs",
+      "lda_hog",
+      "svm_hog",
+      "svm_hog_fs"
+    ]
+  },
+  "robustness_run_sha256": "65004dc1f0744d9cb29e4931fef559e10904ee8e7eac973fbb8a489a422cb25c"
+}

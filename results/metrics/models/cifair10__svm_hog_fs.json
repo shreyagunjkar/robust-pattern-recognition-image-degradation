@@ -1,0 +1,289 @@
+{
+  "dataset": "cifair10",
+  "model": "svm_hog_fs",
+  "title": "SVM + HOG with ANOVA F-test feature selection on the HOG features (SVM + HOG + FS)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.1,
+        "val_accuracy": 0.434862012987013,
+        "val_macro_f1": 0.43229266950879863,
+        "fit_seconds": 3.07,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.25,
+        "val_accuracy": 0.479099025974026,
+        "val_macro_f1": 0.4768994362487417,
+        "fit_seconds": 6.12,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.5,
+        "val_accuracy": 0.515625,
+        "val_macro_f1": 0.5141183524158148,
+        "fit_seconds": 11.43,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.75,
+        "val_accuracy": 0.5367288961038961,
+        "val_macro_f1": 0.5363688536056899,
+        "fit_seconds": 23.22,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.440137987012987,
+        "val_macro_f1": 0.4380271338951095,
+        "fit_seconds": 3.3,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.49046266233766234,
+        "val_macro_f1": 0.48899664697226297,
+        "fit_seconds": 6.85,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.5328733766233766,
+        "val_macro_f1": 0.5320911056302927,
+        "fit_seconds": 13.43,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.551948051948052,
+        "val_macro_f1": 0.5519090443207715,
+        "fit_seconds": 25.73,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.4431818181818182,
+        "val_macro_f1": 0.4416792239976193,
+        "fit_seconds": 4.43,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.4945211038961039,
+        "val_macro_f1": 0.49304715915505914,
+        "fit_seconds": 9.85,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.539163961038961,
+        "val_macro_f1": 0.538967139044099,
+        "fit_seconds": 19.31,
+        "n_fit": 10000
+      },
+      {
+        "C": 1.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.5517451298701299,
+        "val_macro_f1": 0.5519961526379713,
+        "fit_seconds": 36.82,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.1,
+        "val_accuracy": 0.43709415584415584,
+        "val_macro_f1": 0.43770064571885986,
+        "fit_seconds": 4.06,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.25,
+        "val_accuracy": 0.49857954545454547,
+        "val_macro_f1": 0.49826387230040475,
+        "fit_seconds": 8.15,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.5,
+        "val_accuracy": 0.5255681818181818,
+        "val_macro_f1": 0.5259073790493368,
+        "fit_seconds": 14.51,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 0.5,
+        "k_frac": 0.75,
+        "val_accuracy": 0.539163961038961,
+        "val_macro_f1": 0.5400709645512036,
+        "fit_seconds": 25.77,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.4318181818181818,
+        "val_macro_f1": 0.43264730969779813,
+        "fit_seconds": 4.66,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.5095373376623377,
+        "val_macro_f1": 0.5092103749695204,
+        "fit_seconds": 9.23,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.5436282467532467,
+        "val_macro_f1": 0.5434313749729118,
+        "fit_seconds": 17.69,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 1.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.5618912337662337,
+        "val_macro_f1": 0.562169039405551,
+        "fit_seconds": 31.32,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.1,
+        "val_accuracy": 0.4419642857142857,
+        "val_macro_f1": 0.440909975457853,
+        "fit_seconds": 5.16,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.25,
+        "val_accuracy": 0.5068993506493507,
+        "val_macro_f1": 0.5059335465691553,
+        "fit_seconds": 10.66,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.5,
+        "val_accuracy": 0.5472808441558441,
+        "val_macro_f1": 0.5473312196124417,
+        "fit_seconds": 20.86,
+        "n_fit": 10000
+      },
+      {
+        "C": 10.0,
+        "gamma_mult": 2.0,
+        "k_frac": 0.75,
+        "val_accuracy": 0.5584415584415584,
+        "val_macro_f1": 0.5590475968879784,
+        "fit_seconds": 40.19,
+        "n_fit": 10000
+      }
+    ],
+    "selected": {
+      "C": 10.0,
+      "gamma_mult": 1.0,
+      "k_frac": 0.75
+    },
+    "selected_at_grid_edge": {
+      "C": true,
+      "gamma_mult": false,
+      "k_frac": true
+    }
+  },
+  "hog_params": {
+    "orientations": 9,
+    "pixels_per_cell": [
+      4,
+      4
+    ],
+    "cells_per_block": [
+      2,
+      2
+    ],
+    "block_norm": "L2-Hys",
+    "transform_sqrt": false
+  },
+  "feature_selection": {
+    "method": "ANOVA F-test (sklearn f_classif) with SelectKBest, fitted on the clean training split",
+    "n_features_in": 1764,
+    "k": 1323,
+    "k_frac": 0.75,
+    "selected_mask_sha256": "82d23a3b2c46b59077cd40e28f30ebd5233c4689270c6075005497130dc3468f"
+  },
+  "data": {
+    "train_n": 45000,
+    "val_n": 4928,
+    "x_train_sha256": "e9955df8625d4756eafc5e6900c01343ab8971ec1d407e65f3db2ea6ae8ca750",
+    "y_train_sha256": "f2ed63e68039660785a644ac2d7597d4bd37b424c19f9f288432a838ed28c50c",
+    "x_val_sha256": "c8184973560e3db6cba5a049e68561154bf57d7cc9e9f1c5834889847604fe40",
+    "y_val_sha256": "ac2bd1f904c60376d91aca2d5bdbb26109c599ff89c3d4358250ea17cfebd4e8",
+    "train_idx_sha256": "f88f436b484789f28273fa0f9105bca4d93d0a59366f153d740a1dbfc78c8c5a"
+  },
+  "files": [
+    {
+      "file": "models/cifair10/svm_hog_fs.joblib",
+      "sha256": "df833d850148753554b1ba6d861f0ace781b56e279c38bc0865f319b252723cb",
+      "seed": 42,
+      "val_accuracy": 0.6375811688311688,
+      "val_macro_f1": 0.6385467683187234,
+      "fit_seconds": 642.0
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}

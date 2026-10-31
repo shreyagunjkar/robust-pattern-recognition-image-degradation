@@ -1,0 +1,251 @@
+{
+  "dataset": "cifair10",
+  "model": "lda_fs",
+  "title": "LDA with ANOVA F-test feature selection on pixels (LDA + FS)",
+  "debug": false,
+  "trained_on": "2026-10-31",
+  "device": "cpu",
+  "selection": {
+    "metric": "clean validation accuracy",
+    "ties": "earlier grid entry",
+    "grid": [
+      {
+        "shrinkage": 0.001,
+        "k_frac": 0.1,
+        "val_accuracy": 0.2148944805194805,
+        "val_macro_f1": 0.2032951282362764,
+        "fit_seconds": 0.52,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.001,
+        "k_frac": 0.25,
+        "val_accuracy": 0.3023538961038961,
+        "val_macro_f1": 0.2981647032777123,
+        "fit_seconds": 0.71,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.001,
+        "k_frac": 0.5,
+        "val_accuracy": 0.35125811688311687,
+        "val_macro_f1": 0.3488950064567812,
+        "fit_seconds": 1.42,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.001,
+        "k_frac": 0.75,
+        "val_accuracy": 0.3823051948051948,
+        "val_macro_f1": 0.38076159548057714,
+        "fit_seconds": 2.82,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.01,
+        "k_frac": 0.1,
+        "val_accuracy": 0.22179383116883117,
+        "val_macro_f1": 0.20833183960491128,
+        "fit_seconds": 0.34,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.01,
+        "k_frac": 0.25,
+        "val_accuracy": 0.30580357142857145,
+        "val_macro_f1": 0.3007570938561274,
+        "fit_seconds": 0.61,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.01,
+        "k_frac": 0.5,
+        "val_accuracy": 0.3573457792207792,
+        "val_macro_f1": 0.35436510299700735,
+        "fit_seconds": 1.39,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.01,
+        "k_frac": 0.75,
+        "val_accuracy": 0.3873782467532468,
+        "val_macro_f1": 0.38564188463298615,
+        "fit_seconds": 2.74,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.05,
+        "k_frac": 0.1,
+        "val_accuracy": 0.22443181818181818,
+        "val_macro_f1": 0.20808766020248068,
+        "fit_seconds": 0.33,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.05,
+        "k_frac": 0.25,
+        "val_accuracy": 0.31290584415584416,
+        "val_macro_f1": 0.306907650655881,
+        "fit_seconds": 0.6,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.05,
+        "k_frac": 0.5,
+        "val_accuracy": 0.36810064935064934,
+        "val_macro_f1": 0.36499358514165864,
+        "fit_seconds": 1.35,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.05,
+        "k_frac": 0.75,
+        "val_accuracy": 0.3963068181818182,
+        "val_macro_f1": 0.3938804210910714,
+        "fit_seconds": 2.75,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.1,
+        "k_frac": 0.1,
+        "val_accuracy": 0.22849025974025974,
+        "val_macro_f1": 0.20981007745116015,
+        "fit_seconds": 0.45,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.1,
+        "k_frac": 0.25,
+        "val_accuracy": 0.3163555194805195,
+        "val_macro_f1": 0.3100479662576271,
+        "fit_seconds": 0.76,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.1,
+        "k_frac": 0.5,
+        "val_accuracy": 0.37459415584415584,
+        "val_macro_f1": 0.37128500250554664,
+        "fit_seconds": 1.35,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.1,
+        "k_frac": 0.75,
+        "val_accuracy": 0.39671266233766234,
+        "val_macro_f1": 0.3940773799875563,
+        "fit_seconds": 2.79,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.3,
+        "k_frac": 0.1,
+        "val_accuracy": 0.22585227272727273,
+        "val_macro_f1": 0.20303698103950119,
+        "fit_seconds": 0.32,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.3,
+        "k_frac": 0.25,
+        "val_accuracy": 0.320211038961039,
+        "val_macro_f1": 0.31289970288632013,
+        "fit_seconds": 0.59,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.3,
+        "k_frac": 0.5,
+        "val_accuracy": 0.36992694805194803,
+        "val_macro_f1": 0.3659924035870752,
+        "fit_seconds": 1.34,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": 0.3,
+        "k_frac": 0.75,
+        "val_accuracy": 0.3991477272727273,
+        "val_macro_f1": 0.3962481411873222,
+        "fit_seconds": 2.76,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": "auto",
+        "k_frac": 0.1,
+        "val_accuracy": 0.2150974025974026,
+        "val_macro_f1": 0.20351667197862838,
+        "fit_seconds": 0.36,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": "auto",
+        "k_frac": 0.25,
+        "val_accuracy": 0.30113636363636365,
+        "val_macro_f1": 0.2969929834631512,
+        "fit_seconds": 0.67,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": "auto",
+        "k_frac": 0.5,
+        "val_accuracy": 0.3536931818181818,
+        "val_macro_f1": 0.35137388178424706,
+        "fit_seconds": 1.91,
+        "n_fit": 45000
+      },
+      {
+        "shrinkage": "auto",
+        "k_frac": 0.75,
+        "val_accuracy": 0.382913961038961,
+        "val_macro_f1": 0.3812300552377422,
+        "fit_seconds": 4.03,
+        "n_fit": 45000
+      }
+    ],
+    "selected": {
+      "shrinkage": 0.3,
+      "k_frac": 0.75
+    },
+    "selected_at_grid_edge": {
+      "shrinkage": true,
+      "k_frac": true
+    }
+  },
+  "hog_params": null,
+  "feature_selection": {
+    "method": "ANOVA F-test (sklearn f_classif) with SelectKBest, fitted on the clean training split",
+    "n_features_in": 3072,
+    "k": 2304,
+    "k_frac": 0.75,
+    "selected_mask_sha256": "7dc7d99442ecb735eb08791fe1731e9c2d66dcc0718abba52a3c253eeedb151e"
+  },
+  "data": {
+    "train_n": 45000,
+    "val_n": 4928,
+    "x_train_sha256": "e9955df8625d4756eafc5e6900c01343ab8971ec1d407e65f3db2ea6ae8ca750",
+    "y_train_sha256": "f2ed63e68039660785a644ac2d7597d4bd37b424c19f9f288432a838ed28c50c",
+    "x_val_sha256": "c8184973560e3db6cba5a049e68561154bf57d7cc9e9f1c5834889847604fe40",
+    "y_val_sha256": "ac2bd1f904c60376d91aca2d5bdbb26109c599ff89c3d4358250ea17cfebd4e8",
+    "train_idx_sha256": "f88f436b484789f28273fa0f9105bca4d93d0a59366f153d740a1dbfc78c8c5a"
+  },
+  "files": [
+    {
+      "file": "models/cifair10/lda_fs.joblib",
+      "sha256": "cb39c5c9a2428282bd3d0e9970c135718a02b18e115d2f3154d4ffc82922d1cd",
+      "seed": 42,
+      "val_accuracy": 0.3991477272727273,
+      "val_macro_f1": 0.3962481411873222,
+      "fit_seconds": 2.8
+    }
+  ],
+  "test_set_used_in_training_or_tuning": false,
+  "environment": {
+    "python": "3.12.16",
+    "platform": "macOS-26.7.1-arm64-arm-64bit",
+    "numpy": "2.5.4",
+    "scipy": "1.18.1",
+    "sklearn": "1.9.1",
+    "skimage": "0.26.0",
+    "torch": "2.15.0"
+  }
+}
