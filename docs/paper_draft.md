@@ -370,7 +370,7 @@ and test sets studied.
 5. **Figures to use** (suggested, three-model set): `main_robustness_curves.png` (the core comparison, both datasets in one figure),
    `main_clean_accuracy.png`, `main_degraded_summary.png`, `main_confusion_fashion_mnist.png` (clean against contrast severity 4),
    one degradation grid (for example `degradation_grid_fashion_mnist_gaussian_blur.png`), and `feature_selection_robustness_delta.png`;
-   optionally Fig. 1 `pipelines.png`. Everything else (heatmaps, `robustness_summary_ci.png`, `retention_ci.png`, `significance_*.png`,
+   `architecture_system.pdf` as the methodology overview figure (the CNN diagram `architecture_cnn.pdf` can go in the model description or the appendix); optionally `pipelines.png`. Everything else (heatmaps, `robustness_summary_ci.png`, `retention_ci.png`, `significance_*.png`,
    `cnn_training_curves.png`, `feature_selection_effect.png`, `feature_selection_maps.png`, the six-model curves and the ciFAIR-10 confusion matrices)
    is better placed in an appendix or supplementary material.
 6. The README in the repository is out of date (it still says no models exist) and should be refreshed before the repository is shared.

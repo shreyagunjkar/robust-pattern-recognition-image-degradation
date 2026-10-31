@@ -552,6 +552,11 @@ seed) are in `results/confusion_matrices/`; the per-condition matrices are in th
 §8.9 and not interpreted class by class beyond that.
 
 
+### 8.4a Architecture diagrams — `architecture_system.(png|pdf)`, `architecture_cnn.(png|pdf)`
+
+* **Content.** (1) The experiment architecture: dataset → stratified split and near-duplicate filter → clean training and tuning → freeze (hashing) on the training side, and test split → frozen degradation ladder → test conditions on the test side, both feeding the evaluation of the frozen models and then predictions, metrics, statistics and figures. (2) The CNN: feature-map shapes (taken from `build_cnn` itself) through five 3 × 3 convolutions, two max-pool + dropout stages, global average pooling and the linear classifier, with the parameter counts (140,458 for 28 × 28 × 1 input, 141,034 for 32 × 32 × 3).
+* **Use.** The first diagram is the figure for the methodology section: it shows that nothing degraded reaches training or tuning. Regenerate with `python -m src.plot_architecture`; PDF versions are vector graphics for the paper.
+
 ### 8.5 Pipelines — `pipelines.png`
 
 * **Content.** One row per implemented solution, boxes for each processing step, hatched boxes for the feature-selection stage.
