@@ -1,5 +1,8 @@
 """Result figures for the comparison (reads the saved result files only; nothing is trained or scored here).
 
+  results/plots/main_*.png                             the three-model comparison (LDA, SVM + HOG, CNN) for the paper:
+                                                       main_clean_accuracy, main_robustness_curves, main_degraded_summary,
+                                                       main_confusion_<dataset>
   results/plots/pipelines.png                          the implemented solutions as pipelines
   results/plots/clean_accuracy_comparison.png          clean test accuracy of every model, both datasets
   results/plots/robustness_curves_<dataset>.png        accuracy vs severity, one panel per degradation family
@@ -115,9 +118,9 @@ def plot_pipelines() -> None:
     _save(fig, "pipelines.png")
 
 
-def plot_clean(clean: pd.DataFrame) -> None:
-    models = present(clean)
-    fig, ax = plt.subplots(figsize=(10, 4))
+def plot_clean(clean: pd.DataFrame, only=None, filename="clean_accuracy_comparison.png") -> None:
+    models = [m for m in present(clean) if only is None or m in only]
+    fig, ax = plt.subplots(figsize=(10 if only is None else 7, 4))
     width = 0.8 / len(models)
     for d, (dataset, title) in enumerate(DATASETS.items()):
         for i, m in enumerate(models):
@@ -135,7 +138,7 @@ def plot_clean(clean: pd.DataFrame) -> None:
                       [Line2D([], [], marker="o", ls="", color=INK, ms=4, label="CNN training seeds")],
               ncol=4, loc="upper center", bbox_to_anchor=(0.5, -0.1))
     ax.set_title("Clean test accuracy (models trained and tuned on clean data only)", loc="left")
-    _save(fig, "clean_accuracy_comparison.png")
+    _save(fig, filename)
 
 
 def plot_curves(per_seed: pd.DataFrame, dataset: str) -> None:
@@ -162,6 +165,34 @@ def plot_curves(per_seed: pd.DataFrame, dataset: str) -> None:
     _save(fig, f"robustness_curves_{dataset}.png")
 
 
+def plot_main_curves(per_seed: pd.DataFrame) -> None:
+    models = [m for m in MODELS if m in ("lda", "svm_hog", "cnn")]
+    fig, axes = plt.subplots(2, 4, figsize=(13, 6.2), sharey=True)
+    for r, (dataset, dtitle) in enumerate(DATASETS.items()):
+        for c, (family, ftitle) in enumerate(FAMILIES.items()):
+            ax = axes[r, c]
+            for m in models:
+                sev, mean, lo, hi = curve(per_seed, dataset, m, family)
+                ax.plot(sev, mean, ls="-", marker="o", ms=5, lw=2, color=COLOR[m], label=LABEL[m])
+                if m == "cnn":
+                    ax.fill_between(sev, lo, hi, color=COLOR[m], alpha=0.18, lw=0)
+            ax.axhline(CHANCE, color=INK2, lw=0.8, ls=(0, (2, 3)))
+            ax.set_xticks(range(6), ["clean", "1", "2", "3", "4", "5"]); ax.set_ylim(0, 1); _grid(ax)
+            if r == 0:
+                ax.set_title(ftitle, loc="left")
+            if c == 0:
+                ax.set_ylabel(f"{dtitle}\ntest accuracy")
+            if r == 1:
+                ax.set_xlabel("severity")
+    h, l = axes[0, 0].get_legend_handles_labels()
+    fig.legend(h + [Line2D([], [], color=INK2, lw=0.8, ls=(0, (2, 3)))], l + ["chance (0.10)"], ncol=4, loc="lower center",
+               bbox_to_anchor=(0.5, -0.02))
+    fig.suptitle("Accuracy of LDA, SVM + HOG and the CNN as test images are degraded (CNN: mean of 3 seeds, band = min–max)",
+                 x=0.01, ha="left", fontsize=10, fontweight="semibold")
+    fig.tight_layout(rect=(0, 0.04, 1, 0.96))
+    _save(fig, "main_robustness_curves.png")
+
+
 def plot_heatmap(per_seed: pd.DataFrame, dataset: str) -> None:
     models = present(per_seed[per_seed.dataset == dataset])
     cols = [(f, s) for f in FAMILIES for s in range(1, 6)]
@@ -186,10 +217,10 @@ def plot_heatmap(per_seed: pd.DataFrame, dataset: str) -> None:
     _save(fig, f"robustness_heatmap_{dataset}.png")
 
 
-def plot_summary(per_seed: pd.DataFrame) -> None:
+def plot_summary(per_seed: pd.DataFrame, only=None, filename="degraded_accuracy_summary.png") -> None:
     fig, axes = plt.subplots(1, 2, figsize=(13, 4), sharey=True)
     for ax, (dataset, title) in zip(axes, DATASETS.items()):
-        models = present(per_seed[per_seed.dataset == dataset])
+        models = [m for m in present(per_seed[per_seed.dataset == dataset]) if only is None or m in only]
         width = 0.8 / len(models)
         for i, m in enumerate(models):
             vals = [curve(per_seed, dataset, m, f)[1][1:].mean() for f in FAMILIES]
@@ -201,23 +232,26 @@ def plot_summary(per_seed: pd.DataFrame) -> None:
         ax.set_title(title, loc="left"); ax.set_ylim(0, 1); _grid(ax)
         ax.axhline(CHANCE, color=INK2, lw=0.8, ls=(0, (2, 3)))
     axes[0].set_ylabel("mean test accuracy over severities 1–5")
-    models = present(per_seed)
+    models = [m for m in present(per_seed) if only is None or m in only]
     fig.legend(handles=[Patch(fc=COLOR[m], alpha=0.55 if m.endswith("_fs") else 1, hatch="///" if m.endswith("_fs") else None,
                               ec=COLOR[m] if m.endswith("_fs") else SURFACE, label=LABEL[m]) for m in models],
                ncol=len(models), loc="lower center", bbox_to_anchor=(0.5, -0.1))
     fig.suptitle("Accuracy averaged over the five severities of each degradation (dotted line = chance)",
                  x=0.01, ha="left", fontsize=10, fontweight="semibold")
     fig.tight_layout(rect=(0, 0, 1, 0.94))
-    _save(fig, "degraded_accuracy_summary.png")
+    _save(fig, filename)
 
 
-def plot_confusion(dataset: str) -> None:
-    conditions = [("clean", "clean"), ("gaussian_noise_s3_r0", "Gaussian noise, severity 3"),
-                  ("gaussian_blur_s3", "Gaussian blur, severity 3"), ("contrast_s4", "contrast reduction, severity 4")]
+ALL_CONFUSION = [("clean", "clean"), ("gaussian_noise_s3_r0", "Gaussian noise, severity 3"),
+                 ("gaussian_blur_s3", "Gaussian blur, severity 3"), ("contrast_s4", "contrast reduction, severity 4")]
+
+
+def plot_confusion(dataset: str, conditions=None, filename=None) -> None:
+    conditions = conditions or ALL_CONFUSION
     models = [m for m in ("lda", "svm_hog", "cnn")
               if (config.PREDICTIONS_DIR / f"robustness_{dataset}_{m}_seed{config.SEED}.npz").exists()]
     names = pd.read_csv(config.CONFUSION_DIR / f"clean_{dataset}_lda_seed{config.SEED}.csv", index_col=0).columns
-    fig, axes = plt.subplots(len(conditions), len(models), figsize=(4 * len(models), 3.9 * len(conditions)))
+    fig, axes = plt.subplots(len(conditions), len(models), figsize=(4 * len(models), 3.9 * len(conditions)), squeeze=False)
     for j, m in enumerate(models):
         with np.load(config.PREDICTIONS_DIR / f"robustness_{dataset}_{m}_seed{config.SEED}.npz") as blob:
             runs = list(blob["runs"])
@@ -234,7 +268,7 @@ def plot_confusion(dataset: str) -> None:
     fig.suptitle(f"{DATASETS[dataset]}: confusion matrices, rows = true class (each row sums to 1), "
                  "columns = predicted class", x=0.01, ha="left", fontsize=10, fontweight="semibold")
     fig.tight_layout(rect=(0, 0, 1, 0.975))
-    _save(fig, f"confusion_{dataset}.png")
+    _save(fig, filename or f"confusion_{dataset}.png")
 
 
 def plot_fs_effect(per_seed: pd.DataFrame) -> None:
@@ -384,6 +418,12 @@ def main() -> None:
         plot_heatmap(per_seed, dataset)
         plot_confusion(dataset)
     plot_summary(per_seed)
+    main3 = ("lda", "svm_hog", "cnn")
+    plot_clean(clean, main3, "main_clean_accuracy.png")
+    plot_summary(per_seed, main3, "main_degraded_summary.png")
+    plot_main_curves(per_seed)
+    for dataset in DATASETS:
+        plot_confusion(dataset, [ALL_CONFUSION[0], ALL_CONFUSION[3]], f"main_confusion_{dataset}.png")
     plot_fs_effect(per_seed)
     plot_cnn_curves()
     plot_summary_ci("ausc", "area under the severity curve\n(mean accuracy, severity 0–5)",

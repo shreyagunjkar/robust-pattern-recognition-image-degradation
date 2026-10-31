@@ -367,9 +367,12 @@ and test sets studied.
 2. **Reference [9]**: confirm the page range and that the McNemar recommendation is stated as summarised in Section II.
 3. **Course requirement.** Feature selection is applied to LDA and SVM + HOG; ask the instructor whether the CNN needs its own selection step.
 4. **Format.** Convert to the target IEEE template (IEEEtran) and fit the page limit; the five generated LaTeX tables need `\usepackage{booktabs}`.
-5. **Figures to use** (suggested): Fig. 1 `pipelines.png`; `robustness_curves_fashion_mnist.png` and `robustness_curves_cifair10.png`;
-   `robustness_summary_ci.png`; `confusion_fashion_mnist.png` (one dataset in the main text); `feature_selection_robustness_delta.png`;
-   `significance_fashion_mnist.png`. Put the rest in an appendix or supplementary material.
+5. **Figures to use** (suggested, three-model set): `main_robustness_curves.png` (the core comparison, both datasets in one figure),
+   `main_clean_accuracy.png`, `main_degraded_summary.png`, `main_confusion_fashion_mnist.png` (clean against contrast severity 4),
+   one degradation grid (for example `degradation_grid_fashion_mnist_gaussian_blur.png`), and `feature_selection_robustness_delta.png`;
+   optionally Fig. 1 `pipelines.png`. Everything else (heatmaps, `robustness_summary_ci.png`, `retention_ci.png`, `significance_*.png`,
+   `cnn_training_curves.png`, `feature_selection_effect.png`, `feature_selection_maps.png`, the six-model curves and the ciFAIR-10 confusion matrices)
+   is better placed in an appendix or supplementary material.
 6. The README in the repository is out of date (it still says no models exist) and should be refreshed before the repository is shared.
 
 **Claim register — each claim, where it comes from, and its strength**
