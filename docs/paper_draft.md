@@ -1,3 +1,6 @@
+> **Superseded for submission:** the IEEE-format paper is `paper/main.tex` (compiled to `paper/main.pdf`). This draft is kept as a longer working version that
+> discusses feature selection at more length; its reference numbers are its own.
+
 # Paper draft — Robust Pattern Recognition Under Noise and Image Degradation
 
 Working draft of every section requested for Phase 7. All numbers come from the saved result files

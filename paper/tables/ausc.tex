@@ -1,0 +1,12 @@
+\begin{tabular}{lcccccc}
+\toprule
+ & \multicolumn{3}{c}{Fashion-MNIST} & \multicolumn{3}{c}{ciFAIR-10} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}
+Degradation & LDA & SVM+HOG & CNN & LDA & SVM+HOG & CNN \\
+\midrule
+Gaussian noise & \textbf{0.765} & 0.476 & 0.474 & \textbf{0.348} & 0.218 & 0.310 \\
+Gaussian blur & 0.718 & \textbf{0.743} & 0.611 & 0.404 & \textbf{0.434} & 0.395 \\
+Contrast reduction & 0.486 & \textbf{0.908} & 0.436 & 0.304 & \textbf{0.616} & 0.496 \\
+Brightness increase & 0.646 & \textbf{0.875} & 0.464 & 0.326 & 0.591 & \textbf{0.712} \\
+\bottomrule
+\end{tabular}

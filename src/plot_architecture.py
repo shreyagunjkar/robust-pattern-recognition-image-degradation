@@ -61,7 +61,8 @@ def _lane(ax, x0, y0, x1, y1, color, label, bottom=False):
             color=INK2, fontweight="semibold", zorder=1)
 
 
-def system() -> None:
+def system(paper: bool = False) -> None:
+    """paper=True draws the overview without the feature-selection detail (main paper figure)."""
     fig, ax = plt.subplots(figsize=(15.5, 6.8))
     ax.set_xlim(0, 15.4); ax.set_ylim(0, 7.2); ax.axis("off")
     _lane(ax, 4.75, 3.95, 12.75, 6.95, LANE_TRAIN, "TRAINING SIDE — clean images only; no degraded image is ever used for training, tuning or model selection")
@@ -72,7 +73,9 @@ def system() -> None:
     train = _box(ax, 6.3, 5.9, "Train split")
     val = _box(ax, 6.3, 4.65, "Validation split")
     test = _box(ax, 6.3, 1.75, "Test split\n(near-duplicates removed)")
-    tune = _box(ax, 9.0, 5.25, "Train and tune\nLDA · SVM + HOG · CNN\n+ ANOVA feature selection\n(LDA, SVM + HOG)\nhyperparameters chosen on\nclean validation accuracy", edge=BLUE, lw=1.8)
+    tune_text = ("Train and tune\nLDA · SVM + HOG · CNN\nhyperparameters chosen on\nclean validation accuracy" if paper else
+                 "Train and tune\nLDA · SVM + HOG · CNN\n+ ANOVA feature selection\n(LDA, SVM + HOG)\nhyperparameters chosen on\nclean validation accuracy")
+    tune = _box(ax, 9.0, 5.25, tune_text, edge=BLUE, lw=1.8)
     freeze = _box(ax, 11.8, 5.25, "Freeze\nmodel files SHA-256 hashed;\ntraining-data digests,\nHOG settings and selected\nfeatures recorded", edge=BLUE, lw=2.4, weight="semibold")
     ladder = _box(ax, 9.0, 1.75, "Degradation ladder (frozen)\nGaussian noise · Gaussian blur\ncontrast reduction · brightness\n5 severities each, audited with\nPSNR / SSIM before any evaluation", edge="#eb6834", lw=1.8)
     conditions = _box(ax, 11.8, 1.75, "Test conditions\nclean + 4 × 5 degraded\n(3 noise realisations)\nidentical images for every\nmodel (SHA-256 checked)", edge="#eb6834", lw=2.4, weight="semibold")
@@ -88,7 +91,7 @@ def system() -> None:
             ha="left", va="bottom", fontsize=7.5, color=INK2)
     ax.set_title("Experiment architecture: train once on clean data, freeze, then score the frozen models on degraded test images",
                  loc="left", fontsize=10.5, pad=8)
-    _save(fig, "architecture_system")
+    _save(fig, "architecture_system_paper" if paper else "architecture_system")
 
 
 def cnn() -> None:
@@ -151,6 +154,7 @@ def cnn() -> None:
 
 def main() -> None:
     system()
+    system(paper=True)
     cnn()
 
 
