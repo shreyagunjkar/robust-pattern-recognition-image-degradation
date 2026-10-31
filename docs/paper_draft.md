@@ -25,8 +25,8 @@ On clean data the CNN is the most accurate model (0.928 on Fashion-MNIST, about 
 does not persist under degradation: on Fashion-MNIST the CNN is significantly less accurate than SVM + HOG in 16 of 21
 conditions. HOG-based models are nearly unaffected by contrast reduction and additive brightness but sensitive to
 noise, pixel-based LDA is the most tolerant of noise and blur, and failing models collapse onto one or two predicted
-classes. Feature selection did not improve clean accuracy; its effect on robustness was large for LDA on Fashion-MNIST
-(up to +0.25 accuracy under brightness), mixed for LDA on ciFAIR-10 and negligible for SVM + HOG. The CNN's accuracy
+classes. Feature selection gave no consistent significant improvement in clean accuracy; its effect on robustness was large for LDA
+on Fashion-MNIST (up to +0.25 accuracy under brightness), mixed for LDA on ciFAIR-10 and small and mixed in sign for SVM + HOG. The CNN's accuracy
 under a given degradation varied by up to 0.12 between training seeds even though clean accuracy varied by about 0.001.
 
 **Keywords:** robustness, image degradation, pattern recognition, HOG, convolutional neural network, feature selection.
@@ -173,7 +173,11 @@ recall and F1, and confusion matrices per condition.
 images for every model so that differences are paired; these cover test-set sampling uncertainty, and CNN training-seed
 variance is reported separately as the range over three seeds. (ii) Exact two-sided McNemar tests on the discordant
 test images for seven model pairs in every condition, with Holm correction over all tests of a dataset; for the CNN each
-of the three seeds is tested and a result is called robust only if all three agree. (iii) Area under the severity curve
+of the three seeds is tested and a result is called robust only if all three agree. **For Gaussian-noise conditions the McNemar
+tests use noise realisation 0 only, whereas reported accuracies and AUSC average the three realisations;** differences of the
+realisation-averaged accuracies are reported with their own paired bootstrap intervals (not adjusted for multiplicity). Averaging changes
+a pairwise difference by at most 0.006 and flips the sign of 2 of 110 noise comparisons, and every Holm-significant noise comparison has
+an averaged-difference interval excluding zero. (iii) Area under the severity curve
 (AUSC; mean accuracy over severity 0–5) and chance-adjusted retention $(\text{Acc}_s - 0.1)/(\text{Acc}_{\text{clean}} - 0.1)$.
 (iv) Prediction collapse: the share of predictions in the most-predicted class.
 
@@ -244,16 +248,17 @@ indistinguishable.
 
 *Figures: `feature_selection_effect.png`, `feature_selection_robustness_delta.png`, `feature_selection_maps.png`;
 Table "fs".* Clean validation accuracy rose monotonically with the fraction of features kept, and every selection model
-chose the largest fraction (75%); selection did not improve clean test accuracy (LDA 0.817 → 0.814 and SVM + HOG
-0.911 → 0.910 on Fashion-MNIST; LDA 0.405 → 0.394, significant, and SVM + HOG 0.625 → 0.627 on ciFAIR-10).
+chose the largest fraction (75%); selection gave no consistent significant improvement in clean test accuracy (LDA 0.817 → 0.814 and
+SVM + HOG 0.911 → 0.910 on Fashion-MNIST; LDA 0.405 → 0.394, a significant decrease, and SVM + HOG 0.625 → 0.627, not significant, on ciFAIR-10).
 
-Under degradation the effect was dataset-dependent for LDA and negligible for SVM + HOG. LDA + FS on Fashion-MNIST was
+Under degradation the effect was dataset-dependent for LDA and small and mixed in sign for SVM + HOG. LDA + FS on Fashion-MNIST was
 significantly more accurate than LDA in 9 of 21 conditions and less accurate in 3, with +0.245 [+0.237, +0.254] under
-severity-5 brightness, +0.115 [+0.108, +0.123] under severity-3 contrast and −0.011 / −0.019 under severity-3 / 5 noise. On
-ciFAIR-10 LDA + FS was more accurate in 3 conditions (noise, up to +0.054 [+0.044, +0.062] at severity 5) and less
+severity-5 brightness, +0.115 [+0.108, +0.123] under severity-3 contrast and −0.011 / −0.013 under severity-3 / 5 noise. On
+ciFAIR-10 LDA + FS was more accurate in 3 conditions (noise, up to +0.054 [+0.048, +0.059] at severity 5) and less
 accurate in 9 (brightness −0.024 and −0.018 at severities 3 and 5, blur about −0.010, clean −0.011). SVM + HOG + FS did not
-differ significantly from SVM + HOG in 15 of 21 conditions on Fashion-MNIST (largest changes +0.029 under severity-3
-noise and −0.026 under severity-5 blur) and in 20 of 21 on ciFAIR-10.
+differ significantly from SVM + HOG in 15 of 21 conditions on Fashion-MNIST, but 6 differed (3 better, under noise at severities 1–3, up to +0.028;
+3 worse, under blur, down to −0.026 at severity 5), and in 20 of 21 on ciFAIR-10 (1 better: blur at severity 3, +0.011). The effects are small
+in absolute terms; a non-significant result does not show equivalence.
 
 ---
 
@@ -274,8 +279,8 @@ pixels. The CNN's loss under brightness on Fashion-MNIST is consistent with a ne
 exactly-black background, whose stored batch-normalisation statistics no longer match shifted activations. The large
 brightness gain of LDA + FS on Fashion-MNIST is consistent with the weakly regularised discriminant selected there
 (shrinkage 0.001) putting large weights on low-variance border pixels, which the F-test mostly drops; this does not explain
-why the same selection hurts LDA under brightness on ciFAIR-10. The negligible effect on SVM + HOG is consistent with
-the selection removing only the weakest quarter of the HOG features. None of these mechanisms was tested (for example by
+why the same selection hurts LDA under brightness on ciFAIR-10. The small effect on SVM + HOG is consistent with
+the selection removing only the weakest quarter of the HOG features; its few significant changes were not investigated. None of these mechanisms was tested (for example by
 activation analysis or ablations).
 
 **Practical implication.** If the type of degradation in use is unknown, a model should not be chosen by clean accuracy
@@ -310,8 +315,8 @@ degraded test images, the clean-accuracy ranking CNN > SVM + HOG > LDA did not p
 the most stable under contrast reduction and additive brightness but the most sensitive to Gaussian noise; pixel-based
 LDA was the most tolerant of noise and blur from a low clean accuracy; on Fashion-MNIST the CNN fell furthest under
 noise, blur and contrast and varied strongly across training seeds; failing models collapsed onto a few classes. ANOVA
-feature selection did not improve clean accuracy, and its effect on robustness was large for LDA on Fashion-MNIST, mixed on
-ciFAIR-10 and negligible for SVM + HOG. These conclusions hold for the two datasets, four degradations, fitted models
+feature selection gave no consistent significant improvement in clean accuracy, and its effect on robustness was large for LDA on Fashion-MNIST, mixed on
+ciFAIR-10 and small and mixed in sign for SVM + HOG. These conclusions hold for the two datasets, four degradations, fitted models
 and test sets studied.
 
 ---
@@ -377,6 +382,7 @@ and test sets studied.
 | HOG-based models most sensitive to Gaussian noise | same | Descriptive; mechanism untested |
 | Failing models collapse onto a few classes | `analysis_prediction_collapse.csv`, confusion matrices | Observed; cause untested |
 | CNN accuracy under degradation varies up to 0.124 across seeds | `robustness_results.csv` | Only 3 seeds |
-| Feature selection does not improve clean accuracy | `results/metrics/models/*_fs.json` (tuning tables), `clean_test_metrics.csv` | Fraction at grid edge (75%) |
+| Feature selection gives no consistent significant clean improvement | `results/metrics/models/*_fs.json` (tuning tables), `clean_test_metrics.csv` | Fraction at grid edge (75%) |
 | LDA + FS gains up to +0.25 under brightness on Fashion-MNIST | `analysis_pairwise.csv` | Dataset-specific (opposite sign on ciFAIR-10); explanation untested |
-| SVM + HOG + FS ≈ SVM + HOG | `analysis_pairwise.csv` | 15/21 and 20/21 conditions not significant |
+| SVM + HOG + FS is close to SVM + HOG, with small mixed effects | `analysis_pairwise.csv` | 15/21 (Fashion-MNIST) and 20/21 (ciFAIR-10) conditions not significant; non-significance is not equivalence |
+| Noise-condition tests use realisation 0; displayed differences are realisation averages | `analysis_pairwise.csv` (`diff_mean_*`) | Averaging changes differences by ≤ 0.006 |

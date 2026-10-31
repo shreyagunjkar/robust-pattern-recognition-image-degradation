@@ -25,5 +25,6 @@
       "lda_fs_seed42": "cb39c5c9a2428282bd3d0e9970c135718a02b18e115d2f3154d4ffc82922d1cd",
       "svm_hog_fs_seed42": "df833d850148753554b1ba6d861f0ace781b56e279c38bc0865f319b252723cb"
     }
-  }
+  },
+  "numpy": "2.5.4"
 }

@@ -64,7 +64,9 @@ def run_context(ds: ImageDataset, x_digest: str, realisations: int) -> str:
                        "y_test_sha256": array_digest(ds.y_test), "n_test": int(len(ds.y_test)),
                        "ladder_fingerprint": degradations.ladder_fingerprint(),
                        "degradation_version": degradations.DEGRADATION_VERSION,
-                       "noise_realisations": realisations}, sort_keys=True)
+                       "noise_realisations": realisations,
+                       # complete noise-generation identity (the degradation cache is keyed on the same items)
+                       "seed": config.SEED, "stream_ids": degradations.STREAM_IDS, "numpy": np.__version__}, sort_keys=True)
 
 
 def saved_matches(blob, entry: Dict[str, object], names: List[str], ds: ImageDataset, context: str) -> bool:
@@ -142,6 +144,46 @@ def collect_results(datasets: Dict[str, ImageDataset], contexts: Dict[str, str],
     return pd.DataFrame(rows)
 
 
+def upgrade_contexts(datasets, models, realisations: int, log=print) -> None:
+    """Re-stamp existing results files with the current context WITHOUT recomputing predictions.
+
+    Used when the context definition gained fields (here: the noise seed, stream ids and numpy version). A file is
+    re-stamped only if the degraded images generated NOW (current seed, numpy and ladder) have exactly the
+    digests the file recorded for every condition, and its model hash, test ids and labels match; otherwise the
+    file is left untouched and an error is raised, so a file made from different inputs is never blessed.
+    """
+    degradations.verify_frozen_ladder()
+    runs = run_list(realisations)
+    names = [run_name(*r) for r in runs]
+    for dataset in datasets:
+        ds = load_dataset(dataset, debug=False)
+        x_digest = array_digest(ds.x_test)
+        context = run_context(ds, x_digest, realisations)
+        fresh = [array_digest(degradations.get_degraded(ds.x_test, ds.test_idx, f, s, dataset=ds.name, split="test",
+                                                         realisation=r, source_digest=x_digest)) for f, s, r in runs]
+        for model in models:
+            meta = json.loads((config.MODEL_META_DIR / f"{dataset}__{model}.json").read_text())
+            for entry in meta["files"]:
+                path = predictions_path(dataset, model, entry["seed"])
+                with np.load(path) as old:
+                    data = {k: old[k] for k in old.files}
+                ok = (data["model_sha256"].item() == entry["sha256"] and [str(r) for r in data["runs"]] == names
+                      and [str(d) for d in data["digests"]] == fresh and np.array_equal(data["test_idx"], ds.test_idx)
+                      and np.array_equal(data["y_true"], ds.y_test))
+                if not ok:
+                    raise RuntimeError(f"{path.name}: recorded inputs differ from the degraded images generated now; "
+                                       "not re-stamped (re-run this model)")
+                data["context"] = np.array(context)
+                np.savez_compressed(path, **data)
+                log(f"[{dataset}] {model} seed {entry['seed']}: inputs verified, context updated")
+    record = json.loads(RUN_RECORD.read_text())
+    if record["ladder_fingerprint"] != degradations.ladder_fingerprint() or record["noise_realisations"] != realisations \
+            or record["seed"] != config.SEED:
+        raise RuntimeError(f"{RUN_RECORD.name} does not match the current ladder, seed or noise-realisation count")
+    record["numpy"] = np.__version__
+    RUN_RECORD.write_text(json.dumps(record, indent=2) + "\n")
+
+
 def _positive_int(text: str) -> int:
     value = int(text)
     if value < 1:
@@ -154,9 +196,11 @@ KEY = ["dataset", "model", "seed", "condition", "realisation"]
 
 def merge_records(old: Dict[str, object], new: Dict[str, object], realisations: int) -> Dict[str, object]:
     """Combine the run record of an earlier partial run with this one (same ladder and noise count only)."""
-    if old["ladder_fingerprint"] != new["ladder_fingerprint"] or old["noise_realisations"] != realisations:
-        raise RuntimeError(f"{RESULTS_CSV.name} was made with a different ladder or noise-realisation count; "
-                           "delete the results and re-run every model to compare like with like")
+    same = (old["ladder_fingerprint"] == new["ladder_fingerprint"] and old["noise_realisations"] == realisations
+            and old.get("seed") == new["seed"] and old.get("numpy") == new["numpy"])
+    if not same:
+        raise RuntimeError(f"{RESULTS_CSV.name} was made with a different ladder, noise-realisation count, seed or "
+                           "numpy version; delete the results and re-run every model to compare like with like")
     models = {d: dict(m) for d, m in old.get("models", {}).items()}
     for dataset, used in new["models"].items():
         models.setdefault(dataset, {}).update(used)
@@ -169,7 +213,13 @@ def main() -> None:
     parser.add_argument("--model", nargs="+", default=list(MODEL_NAMES), choices=MODEL_NAMES)
     parser.add_argument("--noise-realisations", type=_positive_int, default=3,
                         help="independent noise fields per noise condition (realisations 0..n-1)")
+    parser.add_argument("--upgrade-contexts", action="store_true",
+                        help="re-stamp existing results files with the current context after verifying their degraded-image "
+                             "digests (no predictions are recomputed)")
     args = parser.parse_args()
+    if args.upgrade_contexts:
+        upgrade_contexts(args.dataset, args.model, args.noise_realisations)
+        return
     runs = run_list(args.noise_realisations)
     degradations.verify_frozen_ladder()  # before anything is reused or computed
     all_digests: Dict[str, Dict[str, str]] = {}
@@ -193,7 +243,8 @@ def main() -> None:
     results = collect_results(loaded, contexts, args.model, runs)
     record = {"date": datetime.date.today().isoformat(), "noise_realisations": args.noise_realisations,
               "ladder_fingerprint": degradations.ladder_fingerprint(),
-              "degradation_version": degradations.DEGRADATION_VERSION, "seed": config.SEED, "models": models_used}
+              "degradation_version": degradations.DEGRADATION_VERSION, "seed": config.SEED, "numpy": np.__version__,
+              "models": models_used}
     digests_out = all_digests
     if RESULTS_CSV.exists():  # a partial run replaces only the rows (and records) it recomputed
         if not RUN_RECORD.exists():

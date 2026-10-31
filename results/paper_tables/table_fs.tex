@@ -1,17 +1,17 @@
 \begin{table}[t]
 \centering
-\caption{Effect of ANOVA feature selection on test accuracy (model with selection minus model without) at severities 3 and 5; $^{*}$ = significant (exact McNemar test, Holm-corrected over all tests of the dataset, $p<0.05$).}
+\caption{Effect of ANOVA feature selection on test accuracy (model with selection minus model without) at severities 3 and 5; differences of the displayed accuracies (noise: averaged over 3 realisations); $^{*}$ = significant (exact McNemar test, Holm-corrected over all tests of the dataset, $p<0.05$; for noise the test uses realisation 0). No asterisk means no significant difference was found, not equivalence.}
 \label{tab:fs}
 \small
 \begin{tabular}{lllcc}
 \toprule
 Dataset & Comparison & Degradation & Sev. 3 & Sev. 5 \\
 \midrule
-Fashion-MNIST & LDA+FS $-$ LDA & Gaussian noise & -0.011$^{*}$ & -0.019$^{*}$ \\
+Fashion-MNIST & LDA+FS $-$ LDA & Gaussian noise & -0.011$^{*}$ & -0.013$^{*}$ \\
  &  & Gaussian blur & +0.005 & +0.075$^{*}$ \\
  &  & Contrast & +0.115$^{*}$ & +0.002 \\
  &  & Brightness & +0.075$^{*}$ & +0.245$^{*}$ \\
- & SVM+HOG+FS $-$ SVM+HOG & Gaussian noise & +0.029$^{*}$ & -0.001 \\
+ & SVM+HOG+FS $-$ SVM+HOG & Gaussian noise & +0.028$^{*}$ & -0.001 \\
  &  & Gaussian blur & -0.010$^{*}$ & -0.026$^{*}$ \\
  &  & Contrast & +0.000 & +0.001 \\
  &  & Brightness & +0.002 & +0.004 \\

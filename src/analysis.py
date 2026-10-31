@@ -14,7 +14,10 @@ Method (all choices fixed here, before the numbers were looked at):
   sampling noise only; training-seed variance (CNN) is reported separately as the min-max over the 3 seeds, and the
   deterministic models were fitted once.
 * Gaussian-noise conditions: the accuracy table and the robustness summary average the 3 independent noise
-  realisations; the pairwise statistics use realisation 0 only (one paired sample per condition).
+  realisations. In the pairwise table the McNemar test (a test of binary per-image outcomes) and the columns
+  `diff_a_minus_b`, `diff_ci_*` use noise realisation 0 only; the columns `diff_mean_*` give the difference of the
+  realisation-AVERAGED accuracies (the quantity displayed elsewhere) with its own paired bootstrap interval, so the
+  displayed differences are never presented as if the test had been run on them. Other conditions: identical columns.
 * CNN: accuracy tables and the robustness summary use the mean of the 3 seeds (the bootstrap is applied to the
   seed mean); every pairwise comparison involving the CNN is run separately for each seed, and `robust_across_seeds`
   is true only if all three seeds are significant in the same direction.
@@ -38,7 +41,7 @@ from scipy.stats import binomtest
 
 from . import config
 from .models import MODEL_NAMES
-from .run_robustness import RUN_RECORD, predictions_path
+from .run_robustness import DIGESTS_JSON, RUN_RECORD, predictions_path
 
 ALPHA = 0.05
 CHANCE = 0.10
@@ -65,8 +68,16 @@ def holm(p: np.ndarray) -> np.ndarray:
 
 
 def load_predictions(dataset: str, log=print):
-    """{(model, seed): npz arrays} for every model whose results exist; all must share images and runs."""
-    found, ref = {}, None
+    """{(model, seed): npz arrays} for every model whose results exist; all must share images and runs.
+
+    Every file must carry the same experiment context (test pixels / ids / labels, ladder fingerprint, noise seed,
+    numpy version, realisation count) and the same per-condition degraded-image digests, and both must agree with
+    the run record (robustness_run.json) and the digest record (degraded_test_digests.json); otherwise predictions
+    from different experiments could be paired.
+    """
+    record = json.loads(RUN_RECORD.read_text())
+    expected = json.loads(DIGESTS_JSON.read_text())[dataset]
+    found, ref, ref_context = {}, None, None
     for model in MODEL_NAMES:
         meta_path = config.MODEL_META_DIR / f"{dataset}__{model}.json"
         if not meta_path.exists():
@@ -81,6 +92,18 @@ def load_predictions(dataset: str, log=print):
                 if blob["model_sha256"].item() != entry["sha256"]:
                     raise RuntimeError(f"{path.name}: predictions do not belong to the frozen model")
                 data = {k: blob[k] for k in ("runs", "preds", "confusion", "y_true", "test_idx")}
+                context = json.loads(blob["context"].item())
+                digests = {str(r): str(d) for r, d in zip(blob["runs"], blob["digests"])}
+            if digests != expected:
+                raise RuntimeError(f"{path.name}: degraded-image digests differ from {DIGESTS_JSON.name}")
+            if ref_context is None:
+                ref_context = context
+            elif context != ref_context:
+                raise RuntimeError(f"{path.name}: experiment context differs from the other models' files")
+            for key, want in (("ladder_fingerprint", record["ladder_fingerprint"]), ("noise_realisations", record["noise_realisations"]),
+                              ("seed", record["seed"]), ("numpy", record.get("numpy")), ("dataset", dataset)):
+                if context.get(key) != want:
+                    raise RuntimeError(f"{path.name}: context {key}={context.get(key)!r} does not match the run record ({want!r})")
             if ref is None:
                 ref = data
             elif not (np.array_equal(ref["y_true"], data["y_true"]) and np.array_equal(ref["test_idx"], data["test_idx"])
@@ -126,6 +149,8 @@ def analyse(dataset: str, resamples: int, log=print) -> Dict[str, List[Dict[str,
         lo_seed[m], hi_seed[m] = per_seed.min(axis=0), per_seed.max(axis=0)
         boot[m] = np.mean([by_cond(boot_run[(m, s)]) for s in seeds[m]], axis=0)  # (B, C)
 
+    cond_acc = {k: by_cond(v) for k, v in acc_run.items()}  # (C,) per model-seed, realisations averaged
+    cond_boot = {k: by_cond(v) for k, v in boot_run.items()}  # (B, C)
     out: Dict[str, List[Dict[str, object]]] = {"ci": [], "pairwise": [], "summary": [], "collapse": []}
 
     for m in models:
@@ -150,11 +175,16 @@ def analyse(dataset: str, resamples: int, log=print) -> Dict[str, List[Dict[str,
                     p = binomtest(only_a, only_a + only_b, 0.5).pvalue if only_a + only_b else 1.0
                     diff_boot = boot_run[(a, sa)][:, col] - boot_run[(b, sb)][:, col]
                     low, high = ci(diff_boot)
+                    j = conds.index(c)
+                    mean_low, mean_high = ci(cond_boot[(a, sa)][:, j] - cond_boot[(b, sb)][:, j])
                     family, severity = _split(c)
                     out["pairwise"].append({
                         "dataset": dataset, "model_a": a, "model_b": b, "seed_a": sa, "seed_b": sb, "condition": c,
                         "family": family, "severity": severity, "acc_a": ca.mean(), "acc_b": cb.mean(),
                         "diff_a_minus_b": ca.mean() - cb.mean(), "diff_ci_low": low, "diff_ci_high": high,
+                        "tested_noise_realisation": 0 if family == "gaussian_noise" else None,
+                        "diff_mean_realisations": cond_acc[(a, sa)][j] - cond_acc[(b, sb)][j],
+                        "diff_mean_ci_low": mean_low, "diff_mean_ci_high": mean_high,
                         "only_a_correct": only_a, "only_b_correct": only_b, "p_mcnemar": p})
     if out["pairwise"]:
         frame = pd.DataFrame(out["pairwise"])

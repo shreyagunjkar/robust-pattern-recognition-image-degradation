@@ -98,14 +98,16 @@ def main() -> None:
                 cells = []
                 for sev in (3, 5):
                     r = pair[(pair.dataset == ds) & (pair.model_a == a) & (pair.model_b == b) & (pair.condition == f"{fam}_s{sev}")].iloc[0]
-                    cells.append(f"{r.diff_a_minus_b:+.3f}" + ("$^{*}$" if r.significant else ""))
+                    cells.append(f"{r.diff_mean_realisations:+.3f}" + ("$^{*}$" if r.significant else ""))
                 rows.append([title if (a, fam) == ("lda_fs", "gaussian_noise") else "", f"{NAME[a]} $-$ {NAME[b]}" if fam == "gaussian_noise" else "",
                              ftitle] + cells)
         if ds != list(DS)[-1]:
             rows.append("\\midrule")
     (OUT / "table_fs.tex").write_text(table(
         "Effect of ANOVA feature selection on test accuracy (model with selection minus model without) at severities 3 and 5; "
-        "$^{*}$ = significant (exact McNemar test, Holm-corrected over all tests of the dataset, $p<0.05$).",
+        "differences of the displayed accuracies (noise: averaged over 3 realisations); $^{*}$ = significant (exact McNemar test, "
+        "Holm-corrected over all tests of the dataset, $p<0.05$; for noise the test uses realisation 0). "
+        "No asterisk means no significant difference was found, not equivalence.",
         "tab:fs", ["Dataset", "Comparison", "Degradation", "Sev. 3", "Sev. 5"], rows, "lllcc"))
     print(f"wrote {len(list(OUT.glob('*.tex')))} tables to {OUT}")
 
