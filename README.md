@@ -1,12 +1,45 @@
 # Robust Pattern Recognition Under Noise and Image Degradation
 
 A controlled, reproducible comparison of three pattern-recognition approaches
-(**LDA**, **SVM + HOG**, **CNN**) trained on clean images and evaluated on
-progressively degraded test images (Gaussian noise, Gaussian blur, brightness /
-contrast). Datasets: Fashion-MNIST (primary) and CIFAR-10 (replication).
+(**LDA**, **SVM + HOG**, **CNN**) trained on clean images and evaluated on progressively degraded test
+images (Gaussian noise, Gaussian blur, contrast reduction, brightness increase; five severities each).
+Datasets: Fashion-MNIST (primary) and ciFAIR-10 (replication). LDA and SVM + HOG are also trained with an
+ANOVA F-test feature-selection stage (`lda_fs`, `svm_hog_fs`), and LDA + HOG is an ablation.
 
-This is a comparative study, not a new algorithm. **Status: Phase 3 of 7 (degradation
-pipeline) is complete.** The severity ladder is frozen. No models, experiments or results exist yet.
+This is a comparative study, not a new algorithm. **Status: all seven phases are implemented and run**
+(design, data, degradation pipeline, models, robustness experiment, statistical analysis, paper). Every model is
+trained and tuned on clean data only, frozen (SHA-256 hashed), and scored on degraded test images that are
+bit-identical for all models.
+
+## Results at a glance
+
+Clean test accuracy (CNN: mean of 3 training seeds):
+
+| Model | Fashion-MNIST | ciFAIR-10 |
+|---|---|---|
+| LDA | 0.817 | 0.405 |
+| SVM + HOG | 0.911 | 0.625 |
+| CNN | 0.928 | 0.802 |
+
+- The clean ranking does **not** persist under degradation: on Fashion-MNIST the CNN is significantly *less* accurate than
+  SVM + HOG in 16 of 21 conditions (paired exact McNemar tests, Holm-corrected).
+- HOG-based models are almost unaffected by contrast reduction and brightness increase (Fashion-MNIST) but sensitive to
+  Gaussian noise; LDA is the most tolerant of noise and blur; failing models collapse onto one or two predicted classes.
+- CNN accuracy under a single degradation varies by up to 0.12 across training seeds although clean accuracy varies by ~0.001.
+- Feature selection gave no consistent significant gain on clean data; its effect on robustness was large for LDA on
+  Fashion-MNIST, mixed on ciFAIR-10 and small for SVM + HOG.
+
+These are descriptive findings for two small datasets, four synthetic degradations and one test set per dataset;
+see the limitations in [`docs/project_documentation.md`](docs/project_documentation.md) and the paper.
+
+| Where | What |
+|---|---|
+| [`paper/main.pdf`](paper/main.pdf) | IEEE two-column paper (LaTeX source `paper/main.tex`) |
+| [`docs/project_documentation.md`](docs/project_documentation.md) | full technical documentation (methods, results, discussion) |
+| [`docs/literature_survey.md`](docs/literature_survey.md) | literature survey and verification notes |
+| [`docs/models.md`](docs/models.md), [`docs/degradations.md`](docs/degradations.md) | model and degradation definitions |
+| `results/plots/` | figures (`main_*.png` = three-model comparison; `architecture_*.png` = diagrams) |
+| `results/metrics/` | clean and degraded test scores, statistics (`analysis_*.csv`), frozen records |
 
 ## Setup
 
@@ -22,6 +55,20 @@ python -m src.utils                      # writes results/metrics/environment.js
 python -m src.calibration                # audit the severity ladder (add --freeze to write the record)
 python -m src.visualization              # regenerate the degradation grids and calibration curves
 ```
+
+Training, evaluation and analysis (CPU is enough; the full run takes several hours, dominated by the SVM and CNN):
+
+```bash
+python -m src.train --dataset fashion_mnist cifair10 --model lda svm_hog cnn lda_hog lda_fs svm_hog_fs
+python -m src.evaluate_clean                 # clean test scores (verifies model hashes and training data)
+python -m src.run_robustness                 # all degraded conditions, 31 runs per model and dataset
+python -m src.analysis                       # bootstrap CIs, McNemar + Holm, AUSC, retention
+python -m src.plot_results && python -m src.plot_selection && python -m src.plot_architecture
+python -m src.make_ieee_tables               # LaTeX tables for the paper; build the paper with: cd paper && tectonic -X compile main.tex
+```
+
+Trained model weights (`models/`), logs and the local test suite are **not** in the repository; each model's SHA-256 and training-data
+digests are recorded in `results/metrics/models/*.json`, so a retrained model can be checked against the record.
 
 `PRJ_DEBUG=1` (or `debug=True`) switches every loader to small stratified subsets so the
 whole pipeline can be tested in minutes before the full run.
@@ -135,12 +182,13 @@ unfiltered Fashion-MNIST) must reuse those same models; nothing is retrained or 
 ## Project layout
 
 ```
-src/            config, data_loader, preprocessing, leakage, utils, degradations, calibration,
-                visualization   (models, evaluation, experiments are added in later phases)
-docs/           degradations.md (definitions, audit, limitations)
-data/raw|splits|cache   downloaded data (git-ignored), saved split indices, degraded-image cache (git-ignored)
-results/        metrics/ (severity audit, frozen ladder), plots/ (grids, curves), confusion_matrices/
-notebooks/      exploration only; the pipeline lives in src/
+src/            config, data_loader, preprocessing, leakage, degradations, calibration, models/ (LDA, SVM + HOG, CNN),
+                train, evaluate_clean, run_robustness, metrics, analysis, plot_results, plot_selection,
+                plot_architecture, make_paper_tables, make_ieee_tables, visualization, utils
+docs/           project_documentation.md, models.md, degradations.md, literature_survey.md, paper_draft.md
+paper/          main.tex, refs.bib, tables/, figs/, main.pdf (IEEE conference format)
+data/splits     saved split indices (raw data and caches are git-ignored)
+results/        metrics/ (scores, statistics, frozen records), predictions/, confusion_matrices/, plots/, paper_tables/
 ```
 
 ## Reproducibility record
@@ -148,9 +196,10 @@ notebooks/      exploration only; the pipeline lives in src/
 Seed 42 (`src/config.py`); PyTorch deterministic kernels are requested but results can still
 differ across hardware, drivers and library versions. Software versions:
 `results/metrics/environment.json` and `requirements-lock.txt`. Degradation parameters are in `src/degradations.py` and the frozen ladder record; model
-hyperparameters and the final experimental matrix will be added as each phase is completed.
+hyperparameters are recorded per model in `results/metrics/models/*.json`.
 
 ## Roadmap
 
-1. Experimental design (done)  2. Project setup and data loading (done)
-3. Degradation pipeline (done)  4. Models  5. Robustness experiment  6. Analysis  7. Paper support
+All seven phases are done: 1 experimental design, 2 setup and data, 3 degradation pipeline, 4 models, 5 robustness experiment,
+6 analysis, 7 paper support. Possible extensions: more CNN seeds, other feature-selection methods, the original-CIFAR-10 and
+unfiltered-test sensitivity runs (supported by the loader, not yet run), augmentation or noise-aware training, real degraded data.
