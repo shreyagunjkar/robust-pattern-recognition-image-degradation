@@ -10,3 +10,4 @@ data/cache/
 .DS_Store
 tests/
 /logs/
+submission/

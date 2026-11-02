@@ -38,6 +38,7 @@ see the limitations in [`docs/project_documentation.md`](docs/project_documentat
 | [`docs/project_documentation.md`](docs/project_documentation.md) | full technical documentation (methods, results, discussion) |
 | [`docs/literature_survey.md`](docs/literature_survey.md) | literature survey and verification notes |
 | [`docs/models.md`](docs/models.md), [`docs/degradations.md`](docs/degradations.md) | model and degradation definitions |
+| [`dataset/`](dataset/) | the Fashion-MNIST files used by the case study (ciFAIR-10 is a download link, see `dataset/README.md`) |
 | `results/plots/` | figures (`main_*.png` = three-model comparison; `architecture_*.png` = diagrams) |
 | `results/metrics/` | clean and degraded test scores, statistics (`analysis_*.csv`), frozen records |
 
